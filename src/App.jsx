@@ -1,36 +1,109 @@
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Card from "./Card.jsx";
-import bg2 from "./assets/bg2.jpg";
+import StartScreen from "./StartScreen.jsx";
+import GameOver from "./GameOver.jsx";
+import GameHeader from "./GameHeader.jsx";
+import { playSound, toggleSound, isSoundEnabled } from './sounds.js';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faVolumeHigh, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   faBitcoin, faCss3Alt, faEthereum, faGithub,
-  faHtml5, faJava, faLinux, faReact,
+  faHtml5, faJava, faLinux, faReact, faJs, 
+  faPython, faNode, faDocker, faPhp, faVuejs,
+  faAngular, faBootstrap, faUbuntu, faApple
 } from "@fortawesome/free-brands-svg-icons";
 
 function App() {
-  const icons = [faBitcoin, faCss3Alt, faEthereum, faGithub, faHtml5, faJava, faLinux, faReact];
+  // All available icons for cards
+  const allIcons = [
+    faBitcoin, faCss3Alt, faEthereum, faGithub, faHtml5, 
+    faJava, faLinux, faReact, faJs, faPython, faNode, 
+    faDocker, faPhp, faVuejs, faAngular, faBootstrap, 
+    faUbuntu, faApple
+  ];
+  
+  // Game state
   const [cards, setCards] = useState([]);
   const [flippedCards, setFlippedCards] = useState([]);
   const [matchedCards, setMatchedCards] = useState([]);
-  const [flipBackSignal, setFlipBackSignal] = useState(0);
+  const [shakeCard, setShakeCard] = useState(null);
   const [disableClicks, setDisableClicks] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [timer, setTimer] = useState(60);
   const [gameOver, setGameOver] = useState(false);
   const [result, setResult] = useState(null);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [difficulty, setDifficulty] = useState("Medium");
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const timerRef = useRef(null);
+  
+  // Difficulty settings
+  const difficultySettings = {
+    Easy: { time: 90, pairs: 6 },
+    Medium: { time: 60, pairs: 8 },
+    Hard: { time: 45, pairs: 10 }
+  };
 
-  const generateShuffledCards = () => {
+  const generateShuffledCards = (pairCount) => {
+    // Select the specified number of icons
+    const selectedIcons = allIcons.slice(0, pairCount);
     let id = 0;
-    const duplicatedIcons = [...icons, ...icons];
+    // Create pairs
+    const duplicatedIcons = [...selectedIcons, ...selectedIcons];
+    // Return shuffled card objects
     return duplicatedIcons
       .map(icon => ({ icon, id: id++, matchId: icon.iconName }))
       .sort(() => Math.random() - 0.5);
   };
 
-  useEffect(() => {
-    setCards(generateShuffledCards());
-  }, []);
+  const startGame = () => {
+    const { time, pairs } = difficultySettings[difficulty];
+    setTimer(time);
+    setCards(generateShuffledCards(pairs));
+    setFlippedCards([]);
+    setMatchedCards([]);
+    setGameStarted(true);
+    setIsRunning(true);
+    setGameOver(false);
+    setResult(null);
+    playSound('start');
+  };
 
+  const restartGame = () => {
+    setDisableClicks(true);
+    setIsRunning(false);
+    setFlippedCards([]);
+    setMatchedCards([]);
+    setGameOver(false);
+    setResult(null);
+    
+    const { time, pairs } = difficultySettings[difficulty];
+    setTimer(time);
+    
+    setTimeout(() => {
+      setCards(generateShuffledCards(pairs));
+      setDisableClicks(false);
+      setIsRunning(true);
+      playSound('start');
+    }, 500);
+  };
+
+  const returnToHome = () => {
+    setGameStarted(false);
+    setIsRunning(false);
+    setGameOver(false);
+    clearInterval(timerRef.current);
+    playSound('click');
+  };
+  
+  const handleToggleSound = () => {
+    const newState = toggleSound();
+    setSoundOn(newState);
+    playSound('click');
+  };
+
+  // Timer management
   useEffect(() => {
     if (!isRunning || gameOver) {
       clearInterval(timerRef.current);
@@ -44,6 +117,7 @@ function App() {
           setIsRunning(false);
           setGameOver(true);
           setResult("lose");
+          playSound('lose');
           return 0;
         }
         return prev - 1;
@@ -53,32 +127,42 @@ function App() {
     return () => clearInterval(timerRef.current);
   }, [isRunning, gameOver]);
 
+  // Card flipping logic
   useEffect(() => {
     if (flippedCards.length === 2) {
       const [first, second] = flippedCards;
       setDisableClicks(true);
 
       if (cards[first].matchId === cards[second].matchId) {
+        // Match found
+        playSound('match');
         setMatchedCards(prev => [...prev, first, second]);
         setTimeout(() => {
           setFlippedCards([]);
           setDisableClicks(false);
         }, 800);
       } else {
+        // No match, shake cards
         setTimeout(() => {
-          setFlipBackSignal(prev => prev + 1);
-          setFlippedCards([]);
-          setDisableClicks(false);
+          playSound('noMatch');
+          setShakeCard([first, second]);
+          setTimeout(() => {
+            setShakeCard(null);
+            setFlippedCards([]);
+            setDisableClicks(false);
+          }, 500);
         }, 800);
       }
     }
   }, [flippedCards, cards]);
 
+  // Check for win condition
   useEffect(() => {
     if (cards.length && matchedCards.length === cards.length) {
       setGameOver(true);
       setIsRunning(false);
       setResult("win");
+      playSound('win');
     }
   }, [matchedCards, cards]);
 
@@ -92,54 +176,106 @@ function App() {
     )
       return;
 
+    // Play flip sound
+    playSound('flip');
+    
+    // Flip card
     setFlippedCards(prev => [...prev, index]);
   };
 
-  const restartGame = () => {
-    setDisableClicks(true);
-    setIsRunning(false);
-    setFlippedCards([]);
-    setMatchedCards([]);
-    setGameOver(false);
-    setResult(null);
-    setTimer(60);
-    setFlipBackSignal(prev => prev + 1); // This triggers card reset
-  
-    setTimeout(() => {
-      setCards(generateShuffledCards());
-      setDisableClicks(false);
-    }, 300);
-  };
-  
+  // Get the total number of pairs for display
+  const totalPairs = cards.length / 2;
+  const matchedPairs = matchedCards.length / 2;
 
   return (
-    <div className="min-h-screen bg-cover bg-center relative" style={{ backgroundImage: `url(${bg2})` }}>
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-4 bg-black bg-opacity-60 px-6 py-3 rounded-xl text-yellow-300 shadow-md text-lg z-10">
-        <span>⏱ Time: {timer}s</span>
-        <button onClick={() => setIsRunning(true)} className="bg-green-600 px-3 py-1 rounded hover:bg-green-700">▶️ Play</button>
-        <button onClick={() => setIsRunning(false)} className="bg-yellow-600 px-3 py-1 rounded hover:bg-yellow-700">⏸️ Pause</button>
-        <button onClick={restartGame} className="bg-red-600 px-3 py-1 rounded hover:bg-red-700">🔁 Restart</button>
-      </div>
-
-      {gameOver && (
-        <div className="fixed top-1/3 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-10 py-6 rounded-2xl text-2xl shadow-xl z-50 text-center">
-          {result === "win" ? "🎉 You Win!" : "💀 Time's Up! You Lose!"}
-          <button onClick={restartGame} className="block mt-4 mx-auto bg-yellow-400 text-black px-6 py-2 rounded-xl hover:bg-yellow-500 transition">
-            🔁 Restart Game
-          </button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-6 p-10 max-w-screen-lg mx-auto">
-        {cards.map((card, index) => (
-          <Card
-          key={card.id}
-          icon={card.icon}
-          onClick={() => handleCardClick(index)}
-          isFlipped={flippedCards.includes(index) || matchedCards.includes(index)}
-          canFlip={isRunning && !gameOver}
-        />        
-        ))}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-800">
+      {/* Sound toggle button */}
+      <button 
+        className="fixed top-4 right-4 z-50 bg-slate-800 p-3 rounded-full shadow-lg border border-slate-600"
+        onClick={handleToggleSound}
+        aria-label={soundOn ? "Mute sound" : "Enable sound"}
+      >
+        <FontAwesomeIcon 
+          icon={soundOn ? faVolumeHigh : faVolumeXmark} 
+          className={soundOn ? "text-yellow-300" : "text-white"}
+          size="lg"
+        />
+      </button>
+      
+      <div className="game-container">
+        <AnimatePresence>
+          {!gameStarted ? (
+            <StartScreen 
+              onStartGame={startGame} 
+              onSelectDifficulty={(diff) => {
+                setDifficulty(diff);
+                playSound('click');
+              }}
+              selectedDifficulty={difficulty}
+            />
+          ) : (
+            <>
+              <GameHeader 
+                timer={timer}
+                pairs={matchedPairs}
+                totalPairs={totalPairs}
+                isRunning={isRunning}
+                onPause={() => {
+                  setIsRunning(false);
+                  playSound('click');
+                }}
+                onPlay={() => {
+                  setIsRunning(true);
+                  playSound('click');
+                }}
+                onRestart={() => {
+                  playSound('click');
+                  restartGame();
+                }}
+                onHome={() => {
+                  playSound('click');
+                  returnToHome();
+                }}
+                difficulty={difficulty}
+              />
+              
+              <motion.div 
+                className="card-grid"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ staggerChildren: 0.05 }}
+              >
+                {cards.map((card, index) => (
+                  <Card
+                    key={card.id}
+                    icon={card.icon}
+                    onClick={() => handleCardClick(index)}
+                    isFlipped={flippedCards.includes(index) || matchedCards.includes(index)}
+                    isMatched={matchedCards.includes(index)}
+                    canFlip={isRunning && !gameOver}
+                    shake={shakeCard?.includes(index)}
+                  />        
+                ))}
+              </motion.div>
+              
+              {gameOver && (
+                <GameOver 
+                  result={result}
+                  timer={timer}
+                  pairs={matchedPairs}
+                  onRestart={() => {
+                    playSound('click');
+                    restartGame();
+                  }}
+                  onHome={() => {
+                    playSound('click');
+                    returnToHome();
+                  }}
+                />
+              )}
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
