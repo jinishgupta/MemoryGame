@@ -3,9 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { PassportProvider } from './components/auth'
-import { AuthCallback } from './components/auth'
-import '@bedrock_org/passport/dist/style.css'
+// Temporarily disable Orange ID imports for local development
+// import { PassportProvider } from './components/auth/index.jsx'
+// import { AuthCallback } from './components/auth/index.jsx'
+// import '@bedrock_org/passport/dist/style.css'
 
 try {
   // Dynamically import memory icon
@@ -31,13 +32,14 @@ const root = document.getElementById('root');
 
 createRoot(root).render(
   <React.StrictMode>
-    <PassportProvider>
+    {/* Temporarily disable PassportProvider for local development */}
+    {/* <PassportProvider> */}
       <BrowserRouter>
         <Routes>
-          <Route path="/auth/callback" element={<AuthCallback />} />
+          {/* <Route path="/auth/callback" element={<AuthCallback />} /> */}
           <Route path="*" element={<App />} />
         </Routes>
       </BrowserRouter>
-    </PassportProvider>
+    {/* </PassportProvider> */}
   </React.StrictMode>,
 )

@@ -137,7 +137,9 @@ function StartScreen({ onStart, onDifficultyChange, selectedDifficulty, embedded
           whileTap={{ scale: 0.98 }}
           onClick={() => {
             playSound('click');
-            onStart();
+            // Start game with the selected difficulty settings
+            const settings = difficulties.find(d => d.name === selectedDifficulty);
+            onStart(null);
           }}
         >
           Start Game
