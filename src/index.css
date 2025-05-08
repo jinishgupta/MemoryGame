@@ -92,7 +92,7 @@
 }
 
 .animate-pulse-custom {
-  animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-custom 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes pulse-custom {
@@ -100,7 +100,7 @@
     opacity: 1;
   }
   50% {
-    opacity: 0.6;
+    opacity: 0.5;
   }
 }
 
@@ -131,3 +131,5 @@
     transform: translateY(100vh) rotate(360deg);
   }
 }
+
+/* Custom CSS */

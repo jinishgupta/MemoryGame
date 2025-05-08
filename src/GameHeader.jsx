@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClock, faPause, faPlay, faRotate, faHouse } from "@fortawesome/free-solid-svg-icons";
+import { faClock, faRotate, faHouse } from "@fortawesome/free-solid-svg-icons";
 import ProgressBar from './ProgressBar.jsx';
+import { playSound } from './sounds.js';
 
-function GameHeader({ timer, pairs, totalPairs, isRunning, onPause, onPlay, onRestart, onHome, difficulty }) {
+function GameHeader({ timer, pairs, totalPairs, onRestart, onHome, difficulty }) {
   // Get initial timer value based on difficulty
   const getMaxTime = () => {
     switch(difficulty) {
@@ -17,93 +18,85 @@ function GameHeader({ timer, pairs, totalPairs, isRunning, onPause, onPlay, onRe
   
   return (
     <motion.div 
-      className="game-header"
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="bg-slate-900/70 py-2 px-3 rounded-lg shadow-md border border-slate-700"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
     >
-      <div className="mb-4 sm:mb-0">
-        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500">
-          MatchUp
-        </h1>
-        <div className="text-xs text-white">
-          {difficulty} mode
-        </div>
-      </div>
-
-      <div className="game-stats mb-4 sm:mb-0">
-        <div className="flex flex-col gap-2 w-full">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faClock} className="text-yellow-300" />
-              <motion.span 
-                className={`font-medium ${timer < 10 ? 'text-red-400 animate-pulse-custom' : 'text-white'}`}
-                key={timer}
-                initial={{ scale: 1 }}
-                animate={{ scale: timer < 10 ? [1, 1.1, 1] : 1 }}
-                transition={{ duration: 0.3 }}
-              >
-                {timer}s
-              </motion.span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div>
+            <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500">
+              MatchUp
+            </h1>
+            <div className="text-xs text-white">
+              {difficulty} mode
             </div>
-            <div className="text-white">{pairs}/{totalPairs} pairs</div>
           </div>
           
-          <div className="w-full space-y-1">
-            <ProgressBar 
-              value={timer} 
-              max={maxTime} 
-              height="h-2" 
-              colorClass={`bg-gradient-to-r ${
-                timer < 10 
-                  ? 'from-red-500 to-red-400' 
-                  : timer < 30 
-                    ? 'from-yellow-500 to-yellow-400' 
-                    : 'from-emerald-500 to-emerald-400'
-              }`} 
-            />
-            <ProgressBar 
-              value={pairs} 
-              max={totalPairs} 
-              height="h-2" 
-              colorClass="bg-gradient-to-r from-yellow-500 to-yellow-400" 
-            />
+          <div className="h-8 border-r border-slate-600"></div>
+          
+          <div className="flex items-center gap-2">
+            <FontAwesomeIcon icon={faClock} className="text-yellow-300" />
+            <motion.span 
+              className={`font-medium ${timer < 10 ? 'text-red-400 animate-pulse-custom' : 'text-white'}`}
+              key={timer}
+              initial={{ scale: 1 }}
+              animate={{ scale: timer < 10 ? [1, 1.1, 1] : 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              {timer}s
+            </motion.span>
+          </div>
+          
+          <div className="text-sm text-white">
+            <span className="font-medium">{pairs}</span>/{totalPairs} pairs
           </div>
         </div>
-      </div>
 
-      <div className="flex gap-2">
-        {isRunning ? (
+        <div className="flex items-center gap-2">
           <motion.button 
-            className="btn btn-secondary"
+            className="bg-slate-700 hover:bg-slate-600 text-white p-1.5 rounded"
             whileTap={{ scale: 0.9 }}
-            onClick={onPause}
+            onClick={() => {
+              playSound('click');
+              onRestart();
+            }}
           >
-            <FontAwesomeIcon icon={faPause} />
+            <FontAwesomeIcon icon={faRotate} size="sm" />
           </motion.button>
-        ) : (
           <motion.button 
-            className="btn btn-success"
+            className="bg-slate-700 hover:bg-slate-600 text-white p-1.5 rounded"
             whileTap={{ scale: 0.9 }}
-            onClick={onPlay}
+            onClick={() => {
+              playSound('click');
+              onHome();
+            }}
           >
-            <FontAwesomeIcon icon={faPlay} />
+            <FontAwesomeIcon icon={faHouse} size="sm" />
           </motion.button>
-        )}
-        <motion.button 
-          className="btn btn-danger"
-          whileTap={{ scale: 0.9 }}
-          onClick={onRestart}
-        >
-          <FontAwesomeIcon icon={faRotate} />
-        </motion.button>
-        <motion.button 
-          className="btn btn-primary"
-          whileTap={{ scale: 0.9 }}
-          onClick={onHome}
-        >
-          <FontAwesomeIcon icon={faHouse} />
-        </motion.button>
+        </div>
+      </div>
+      
+      <div className="mt-2 space-y-1">
+        <ProgressBar 
+          value={timer} 
+          max={maxTime} 
+          height="h-1.5" 
+          colorClass={`bg-gradient-to-r ${
+            timer < 10 
+              ? 'from-red-500 to-red-400' 
+              : timer < 30 
+                ? 'from-yellow-500 to-yellow-400' 
+                : 'from-emerald-500 to-emerald-400'
+          }`} 
+        />
+        <ProgressBar 
+          value={pairs} 
+          max={totalPairs} 
+          height="h-1.5" 
+          colorClass="bg-gradient-to-r from-yellow-500 to-yellow-400" 
+        />
       </div>
     </motion.div>
   );

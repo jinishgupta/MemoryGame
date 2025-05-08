@@ -13,8 +13,13 @@ import {
   faPython, faNode, faDocker, faPhp, faVuejs,
   faAngular, faBootstrap, faUbuntu, faApple
 } from "@fortawesome/free-brands-svg-icons";
+import { useBedrockPassport } from "@bedrock_org/passport";
+import { Login } from "./components/auth";
+import { Profile } from "./components/auth";
+import HomePage from "./components/HomePage";
 
 function App() {
+  const { isLoggedIn } = useBedrockPassport();
   // All available icons for cards
   const allIcons = [
     faBitcoin, faCss3Alt, faEthereum, faGithub, faHtml5, 
@@ -44,6 +49,25 @@ function App() {
     Medium: { time: 60, pairs: 8 },
     Hard: { time: 45, pairs: 10 }
   };
+
+  // Window size state for responsiveness
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+  
+  // Handle window resize for responsive layout
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const generateShuffledCards = (pairCount) => {
     // Select the specified number of icons
@@ -187,6 +211,46 @@ function App() {
   const totalPairs = cards.length / 2;
   const matchedPairs = matchedCards.length / 2;
 
+  // Calculate grid columns based on difficulty and window width
+  const getGridColumnsClass = () => {
+    if (windowSize.width >= 1024) { // Large screens
+      switch(difficulty) {
+        case 'Easy': return 'grid-cols-4 lg:grid-cols-6';
+        case 'Medium': return 'grid-cols-4 lg:grid-cols-4';
+        case 'Hard': return 'grid-cols-5 lg:grid-cols-5';
+        default: return 'grid-cols-4 lg:grid-cols-4';
+      }
+    } else if (windowSize.width >= 640) { // Medium screens
+      switch(difficulty) {
+        case 'Easy': return 'grid-cols-4 md:grid-cols-4';
+        case 'Medium': return 'grid-cols-4 md:grid-cols-4';
+        case 'Hard': return 'grid-cols-5 md:grid-cols-5';
+        default: return 'grid-cols-4 md:grid-cols-4';
+      }
+    } else { // Small screens
+      switch(difficulty) {
+        case 'Easy': return 'grid-cols-3';
+        case 'Medium': return 'grid-cols-4';
+        case 'Hard': return 'grid-cols-3';
+        default: return 'grid-cols-3';
+      }
+    }
+  };
+  
+  // Calculate max card height based on screen size and difficulty
+  const getMaxCardHeight = () => {
+    const isLandscape = windowSize.width > windowSize.height;
+    const totalPairs = difficultySettings[difficulty].pairs;
+    
+    if (windowSize.width < 640) {
+      return isLandscape ? '60px' : '90px'; 
+    } else if (windowSize.width < 1024) {
+      return isLandscape ? '90px' : '110px';
+    } else {
+      return isLandscape ? '120px' : '140px';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-800">
       {/* Sound toggle button */}
@@ -202,81 +266,70 @@ function App() {
         />
       </button>
       
-      <div className="game-container">
-        <AnimatePresence>
-          {!gameStarted ? (
-            <StartScreen 
-              onStartGame={startGame} 
-              onSelectDifficulty={(diff) => {
-                setDifficulty(diff);
-                playSound('click');
-              }}
-              selectedDifficulty={difficulty}
-            />
-          ) : (
-            <>
-              <GameHeader 
-                timer={timer}
-                pairs={matchedPairs}
-                totalPairs={totalPairs}
-                isRunning={isRunning}
-                onPause={() => {
-                  setIsRunning(false);
-                  playSound('click');
-                }}
-                onPlay={() => {
-                  setIsRunning(true);
-                  playSound('click');
-                }}
-                onRestart={() => {
-                  playSound('click');
-                  restartGame();
-                }}
-                onHome={() => {
-                  playSound('click');
-                  returnToHome();
-                }}
-                difficulty={difficulty}
-              />
-              
-              <motion.div 
-                className="card-grid"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ staggerChildren: 0.05 }}
-              >
-                {cards.map((card, index) => (
-                  <Card
-                    key={card.id}
-                    icon={card.icon}
-                    onClick={() => handleCardClick(index)}
-                    isFlipped={flippedCards.includes(index) || matchedCards.includes(index)}
-                    isMatched={matchedCards.includes(index)}
-                    canFlip={isRunning && !gameOver}
-                    shake={shakeCard?.includes(index)}
-                  />        
-                ))}
-              </motion.div>
-              
-              {gameOver && (
-                <GameOver 
-                  result={result}
-                  timer={timer}
-                  pairs={matchedPairs}
-                  onRestart={() => {
-                    playSound('click');
-                    restartGame();
-                  }}
-                  onHome={() => {
-                    playSound('click');
-                    returnToHome();
-                  }}
-                />
-              )}
-            </>
-          )}
-        </AnimatePresence>
+      {/* Profile component */}
+      <div className="fixed top-4 left-4 z-50">
+        <Profile />
       </div>
+      
+      {/* Game states */}
+      {!isLoggedIn ? (
+        <Login />
+      ) : !gameStarted ? (
+        <HomePage 
+          onStart={startGame} 
+          onDifficultyChange={setDifficulty}
+          selectedDifficulty={difficulty}
+        />
+      ) : (
+        <div className="h-screen flex flex-col py-2 px-2 sm:py-4 sm:px-4">
+          <div className="flex-none">
+            <GameHeader 
+              timer={timer} 
+              pairs={matchedPairs} 
+              totalPairs={totalPairs}
+              difficulty={difficulty}
+              onRestart={restartGame}
+              onHome={returnToHome}
+            />
+          </div>
+          
+          <motion.div 
+            className={`flex-grow grid ${getGridColumnsClass()} gap-2 sm:gap-3 mt-2 sm:mt-4 overflow-hidden pb-2 place-content-center place-items-center`}
+            style={{ 
+              maxHeight: "calc(100vh - 100px)"
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            {cards.map((card, index) => (
+              <Card
+                key={card.id}
+                card={card}
+                index={index}
+                isFlipped={flippedCards.includes(index) || matchedCards.includes(index)}
+                isMatched={matchedCards.includes(index)}
+                isShaking={shakeCard?.includes(index)}
+                onClick={() => handleCardClick(index)}
+                maxHeight={getMaxCardHeight()}
+              />
+            ))}
+          </motion.div>
+        </div>
+      )}
+
+      {/* Game over screen */}
+      <AnimatePresence>
+        {gameOver && (
+          <GameOver 
+            result={result} 
+            matchedPairs={matchedPairs}
+            totalPairs={totalPairs}
+            onRestart={restartGame}
+            onHome={returnToHome}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

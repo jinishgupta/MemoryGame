@@ -1,41 +1,36 @@
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-function Card({ icon, onClick, isFlipped, canFlip, isMatched, shake }) {
-  const handleClick = () => {
-    if (canFlip && !isFlipped) {
-      onClick();
-    }
-  };
-
+function Card({ card, index, isFlipped, isMatched, isShaking, onClick, maxHeight = '120px' }) {
   return (
     <motion.div 
-      className="flip-card"
-      whileHover={canFlip && !isFlipped ? { scale: 1.05 } : {}}
-      initial={{ opacity: 0, y: 20 }}
+      className="aspect-square bg-transparent perspective-1000 h-full"
+      style={{ maxHeight, maxWidth: maxHeight }}
+      whileHover={!isFlipped ? { scale: 1.03 } : {}}
+      initial={{ opacity: 0 }}
       animate={{ 
         opacity: 1, 
-        y: 0,
-        x: shake ? [0, -10, 10, -10, 10, 0] : 0
+        x: isShaking ? [0, -5, 5, -5, 5, 0] : 0
       }}
       transition={{ 
         duration: 0.3,
-        x: shake ? { duration: 0.5 } : {}
+        x: isShaking ? { duration: 0.5 } : {}
       }}
       whileTap={{ scale: 0.98 }}
-      onClick={handleClick}
+      onClick={() => !isFlipped && onClick()}
     >
       <motion.div
-        className="flip-card-inner w-full h-full"
+        className="relative w-full h-full duration-500 preserve-3d"
         animate={{ 
           rotateY: isFlipped ? 180 : 0,
-          boxShadow: isMatched ? "0 0 15px 5px rgba(167, 243, 208, 0.7)" : "none"
+          boxShadow: isMatched ? "0 0 10px 3px rgba(167, 243, 208, 0.7)" : "none"
         }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flip-card-front">
+        {/* Front of card */}
+        <div className="absolute w-full h-full backface-hidden bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center shadow-md">
           <motion.span 
-            className="text-2xl font-bold"
+            className="text-base font-bold"
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ repeat: Infinity, duration: 3, repeatType: "loop" }}
           >
@@ -43,7 +38,9 @@ function Card({ icon, onClick, isFlipped, canFlip, isMatched, shake }) {
             <span className="text-white">Up</span>
           </motion.span>
         </div>
-        <div className="flip-card-back">
+        
+        {/* Back of card - shows icon */}
+        <div className="absolute w-full h-full backface-hidden bg-slate-900 rounded-lg border border-slate-700 flex items-center justify-center shadow-md rotateY-180">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ 
@@ -58,8 +55,8 @@ function Card({ icon, onClick, isFlipped, canFlip, isMatched, shake }) {
             }}
           >
             <FontAwesomeIcon 
-              icon={icon} 
-              size="4x" 
+              icon={card.icon} 
+              size="2x" 
               className={isMatched ? "text-green-300" : "text-yellow-300"} 
             />
           </motion.div>
