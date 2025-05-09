@@ -10,23 +10,29 @@ export const POINTS = {
 // Initialize the leaderboard from localStorage or with an empty array
 const initializeLeaderboard = () => {
   let leaderboard = localStorage.getItem('orngLeaderboard');
+  let networkLeaderboard = [];
+  
+  try {
+    // Fetch network leaderboard from API endpoint
+    networkLeaderboard = JSON.parse(localStorage.getItem('networkLeaderboard') || '[]');
+  } catch (e) {
+    console.error('Error parsing network leaderboard:', e);
+  }
   
   if (!leaderboard) {
-    // Initialize with empty array - no mock data
-    localStorage.setItem('orngLeaderboard', JSON.stringify([]));
-    return [];
+    localStorage.setItem('orngLeaderboard', JSON.stringify(networkLeaderboard));
+    return networkLeaderboard;
   }
   
-  // Filter out any mock players (those with IDs starting with 'player')
   const parsedLeaderboard = JSON.parse(leaderboard);
-  const realUsers = parsedLeaderboard.filter(player => !player.id.startsWith('player'));
-  
-  // If the filtered leaderboard is different, update localStorage
-  if (realUsers.length !== parsedLeaderboard.length) {
-    localStorage.setItem('orngLeaderboard', JSON.stringify(realUsers));
-  }
-  
-  return realUsers;
+  const combinedLeaderboard = [...parsedLeaderboard, ...networkLeaderboard]
+    .filter((player, index, self) => 
+      index === self.findIndex(p => p.id === player.id)
+    )
+    .sort((a, b) => b.points - a.points);
+    
+  localStorage.setItem('orngLeaderboard', JSON.stringify(combinedLeaderboard));
+  return combinedLeaderboard;
 };
 
 // Get the current player's ID (use a consistent ID for demo)

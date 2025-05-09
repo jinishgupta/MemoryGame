@@ -235,10 +235,11 @@ const ProfilePage = ({ onBack }) => {
   const streakInfo = getStreakInfo();
 
   // Calculate total daily challenge attempts
-  const totalDailyChallengeAttempts = 
-    stats.difficultyStats.easy.dailyChallengeAttempts + 
-    stats.difficultyStats.medium.dailyChallengeAttempts + 
-    stats.difficultyStats.hard.dailyChallengeAttempts;
+  const totalDailyChallengeAttempts = Math.floor(
+  (stats.difficultyStats.easy.dailyChallengeAttempts + 
+   stats.difficultyStats.medium.dailyChallengeAttempts + 
+   stats.difficultyStats.hard.dailyChallengeAttempts) / 2
+);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-800 py-8 px-4 overflow-y-auto">
@@ -278,7 +279,9 @@ const ProfilePage = ({ onBack }) => {
               <FontAwesomeIcon icon={faUser} className="text-white text-2xl" />
             </div>
             <div className="flex-grow">
-              <h1 className="text-2xl font-bold text-white mr-3">{user?.displayName || stats.playerName || 'Anonymous User'}</h1>
+              <h1 className="text-2xl font-bold text-white mr-3">
+  {user?.displayName || localStorage.getItem('orngPlayerName') || user?.name || 'Anonymous User'}
+</h1>
               {user?.email && (
                 <p className="text-indigo-300 mb-2">
                   <FontAwesomeIcon icon={faEnvelope} className="mr-2" />

@@ -63,10 +63,10 @@ const Profile = () => {
           
           <button 
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3 py-3 text-left text-sm text-red-400 hover:bg-slate-700 transition-colors rounded-b-lg"
+            className="w-full flex items-center gap-2 px-3 py-3 text-left text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-b-lg"
           >
             <FontAwesomeIcon icon={faSignOutAlt} />
-            <span>Sign Out</span>
+            <span>Logout</span>
           </button>
         </motion.div>
       )}
