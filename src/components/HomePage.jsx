@@ -102,10 +102,7 @@ const HomePage = ({
   const displayWinRate = localStats.winRate;
   const displayOrngPoints = localStats.orngPoints;
   const displayRank = localStats.rank;
-  
-  // Get display name from user object
-  const displayName = username || user?.displayName || "Player";
-  
+    
   return (
     <motion.div 
       className="min-h-screen bg-gradient-to-br from-purple-900 via-slate-900 to-slate-800 text-white"
@@ -124,16 +121,7 @@ const HomePage = ({
             animate={{ scale: 1, rotate: 0 }}
             transition={{ duration: 0.5 }}
           />
-          <h1 className="text-2xl font-bold text-orange-400">Memory Game</h1>
-        </div>
-        
-        {/* ORNG Points Display */}
-        <div className="hidden md:flex items-center bg-black/30 px-4 py-2 rounded-lg border border-orange-900/30">
-          <FontAwesomeIcon icon={faCoins} className="text-yellow-400 mr-2" />
-          <div>
-            <p className="text-orange-300 font-bold">{displayOrngPoints} ORNG</p>
-            <p className="text-xs text-orange-200/70">Rank #{displayRank}</p>
-          </div>
+          <h1 className="text-2xl font-bold text-orange-400">MatchUp</h1>
         </div>
         
         {/* User profile buttons */}
@@ -163,7 +151,7 @@ const HomePage = ({
             className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-white"
           >
             <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-            {displayName}
+            Logout
           </button>
         </div>
       </header>
