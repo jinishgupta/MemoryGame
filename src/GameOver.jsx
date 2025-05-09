@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrophy, faClock, faRotate, faHome, faSadTear, faRedo, faCalendarDay, faCheckCircle, faCoins, faCrosshairs, faUserCircle, faHandshake, faHouse } from "@fortawesome/free-solid-svg-icons";
+import { faTrophy, faClock, faRotate, faHome, faSadTear, faRedo, faCalendarDay, faCheckCircle, faCoins, faCrosshairs, faUserCircle, faHandshake } from "@fortawesome/free-solid-svg-icons";
 import Confetti from "./Confetti.jsx";
 import { useState, useEffect } from "react";
 
@@ -60,7 +60,7 @@ function GameOver({
   
   return (
     <motion.div 
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -68,12 +68,12 @@ function GameOver({
       {isWin && <Confetti />}
       
       <motion.div 
-        className="bg-slate-800 rounded-2xl p-4 sm:p-8 w-full max-w-md shadow-2xl border border-slate-600 overflow-y-auto max-h-[90vh]"
+        className="bg-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl border border-slate-600 my-4 overflow-y-auto"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.2, type: "spring", stiffness: 400, damping: 25 }}
       >
-        <div className="text-center mb-4 sm:mb-8">
+        <div className="text-center mb-8">
           {isWin ? (
             <>
               <motion.div 
@@ -89,8 +89,8 @@ function GameOver({
                   <FontAwesomeIcon icon={faTrophy} className="text-yellow-400 text-5xl" />
                 )}
               </motion.div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-green-400 mb-2">Congratulations!</h2>
-              <p className="text-white text-base sm:text-lg">You matched all {totalPairs} pairs!</p>
+              <h2 className="text-3xl font-bold text-green-400 mb-2">Congratulations!</h2>
+              <p className="text-white text-lg">You matched all {totalPairs} pairs!</p>
               
               {/* Duel win result */}
               {isDuel && isWin && duelInfo && (
@@ -168,22 +168,12 @@ function GameOver({
                 </motion.div>
               )}
               
-              {/* Points earned */}
-              <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center items-center">
-                {earnedPoints > 0 && (
-                  <div className="bg-orange-900/50 px-4 py-2 rounded-lg">
-                    <FontAwesomeIcon icon={faCoins} className="text-yellow-400 mr-2" />
-                    <span className="text-orange-300">+{earnedPoints} ORNG earned</span>
-                  </div>
-                )}
-                
-                {localStats.bestTime && !isDuel && (
-                  <div className="bg-indigo-900/50 px-4 py-2 rounded-lg">
-                    <FontAwesomeIcon icon={faClock} className="text-indigo-400 mr-2" />
-                    <span className="text-indigo-300">Best time: {localStats.bestTime}s</span>
-                  </div>
-                )}
-              </div>
+              {localStats.bestTime && !isDuel && (
+                <div className="mt-2 inline-block bg-indigo-900/50 px-4 py-2 rounded-lg">
+                  <FontAwesomeIcon icon={faClock} className="text-indigo-400 mr-2" />
+                  <span className="text-indigo-300">Best time: {localStats.bestTime}s</span>
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -266,26 +256,32 @@ function GameOver({
             )}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+          <div className="flex gap-3">
+            {/* Don't show restart for daily challenge that was won */}
+            {!(dailyChallengeCompleted || (isDuel && isWin)) && (
+              <motion.button
+                className="flex-1 py-3 px-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg flex items-center justify-center"
+                onClick={onRestart}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <FontAwesomeIcon icon={faRotate} className="mr-2" />
+                Restart
+              </motion.button>
+            )}
             <motion.button
-              onClick={onRestart}
-              className="bg-blue-600 hover:bg-blue-500 text-white py-3 px-6 rounded-lg flex items-center justify-center font-medium"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <FontAwesomeIcon icon={faRotate} className="mr-2" />
-              Play Again
-            </motion.button>
-            
-            <motion.button
+              className={`flex-1 py-3 px-5 ${
+                dailyChallengeCompleted || (isDuel && isWin) ? "bg-green-600 hover:bg-green-500" : "bg-slate-600 hover:bg-slate-500"
+              } text-white rounded-lg flex items-center justify-center`}
               onClick={onHome}
-              className="bg-slate-700 hover:bg-slate-600 text-white py-3 px-6 rounded-lg flex items-center justify-center font-medium"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
             >
-              <FontAwesomeIcon icon={faHouse} className="mr-2" />
-              Back to Home
+              <FontAwesomeIcon 
+                icon={dailyChallengeCompleted || (isDuel && isWin) ? faHandshake : faHome} 
+                className="mr-2" 
+              />
+              {dailyChallengeCompleted || (isDuel && isWin) ? "Awesome!" : "Home"}
             </motion.button>
           </div>
         </div>

@@ -52,28 +52,28 @@ const GameHeader = ({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <div>
             <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500">
               MatchUp
             </h1>
-            <div className="text-xs text-white flex flex-wrap items-center gap-1">
+            <div className="text-xs text-white flex items-center">
               {difficulty} mode
               {isDailyChallenge && (
-                <span className="ml-1 bg-yellow-500 text-black px-1.5 py-0.5 rounded-full text-xs font-bold flex items-center">
+                <span className="ml-2 bg-yellow-500 text-black px-1.5 py-0.5 rounded-full text-xs font-bold flex items-center">
                   <FontAwesomeIcon icon={faCalendarDay} className="mr-1" size="xs" />
                   Daily
                 </span>
               )}
               {isDuel && (
-                <span className="ml-1 bg-red-500 text-white px-1.5 py-0.5 rounded-full text-xs font-bold flex items-center">
+                <span className="ml-2 bg-red-500 text-white px-1.5 py-0.5 rounded-full text-xs font-bold flex items-center">
                   <FontAwesomeIcon icon={faCrosshairs} className="mr-1" size="xs" />
                   Duel
                 </span>
               )}
               {isVisibilityPaused && (
-                <span className="ml-1 bg-red-500 text-white px-1.5 py-0.5 rounded-full text-xs font-bold flex items-center">
+                <span className="ml-2 bg-red-500 text-white px-1.5 py-0.5 rounded-full text-xs font-bold flex items-center">
                   <FontAwesomeIcon icon={faEyeSlash} className="mr-1" size="xs" />
                   Auto-Paused
                 </span>
@@ -81,7 +81,7 @@ const GameHeader = ({
             </div>
           </div>
           
-          <div className="hidden sm:block h-8 border-r border-slate-600 mx-1"></div>
+          <div className="h-8 border-r border-slate-600 mx-1"></div>
           
           <div className="flex items-center gap-2">
             <FontAwesomeIcon icon={faClock} className="text-yellow-300" />
@@ -100,31 +100,33 @@ const GameHeader = ({
             <span className="font-medium">{pairs}</span>/{totalPairs} pairs
           </div>
           
+          {/* User Info */}
           {username && (
-            <div className="flex items-center gap-1 bg-indigo-900/30 px-2 py-1 rounded-lg">
+            <div className="hidden md:flex items-center gap-1 bg-indigo-900/30 px-2 py-1 rounded-lg">
               <FontAwesomeIcon icon={faUser} className="text-indigo-400 text-xs" />
-              <span className="text-indigo-300 text-sm font-medium truncate max-w-[120px]">{username}</span>
+              <span className="text-indigo-300 text-sm font-medium">{username}</span>
             </div>
           )}
           
+          {/* Challenge Info or ORNG Points */}
           {isDuel && duelInfo ? (
-            <div className="flex items-center gap-1 bg-red-900/30 px-2 py-1 rounded-lg">
+            <div className="hidden md:flex items-center gap-1 bg-red-900/30 px-2 py-1 rounded-lg">
               <FontAwesomeIcon icon={faCrosshairs} className="text-red-400 text-xs" />
               <span className="text-white text-sm font-medium mr-1">vs</span>
-              <span className="text-red-300 text-sm font-medium truncate max-w-[80px]">{duelInfo.opponent?.name}</span>
+              <span className="text-red-300 text-sm font-medium">{duelInfo.opponent?.name}</span>
               <div className="mx-1 h-3 border-r border-red-600"></div>
               <FontAwesomeIcon icon={faCoins} className="text-yellow-400 text-xs" />
               <span className="text-yellow-300 text-sm font-medium">{duelInfo.betAmount}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 bg-orange-900/30 px-2 py-1 rounded-lg">
+            <div className="hidden md:flex items-center gap-1 bg-orange-900/30 px-2 py-1 rounded-lg">
               <FontAwesomeIcon icon={faCoins} className="text-yellow-400 text-xs" />
               <span className="text-orange-300 text-sm font-medium">{orngPoints || 0}</span>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-2 mt-2 md:mt-0">
+        <div className="flex items-center gap-2">
           {onProfile && (
             <motion.button 
               className="bg-indigo-600 hover:bg-indigo-500 text-white p-1.5 rounded"

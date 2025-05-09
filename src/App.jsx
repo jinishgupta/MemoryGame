@@ -50,6 +50,27 @@ function App() {
   const { isLoggedIn, user } = useBedrockPassport();
   // const isLoggedIn = true; // Remove this line as we're using real authentication now
   
+  // Track logged-in users
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      const allUsers = JSON.parse(localStorage.getItem('allLoggedInUsers') || '[]');
+      
+      // Check if user is already in the list
+      if (!allUsers.some(u => u.id === user.id)) {
+        // Add user to list
+        allUsers.push({
+          id: user.id,
+          name: user.displayName || 'Anonymous User',
+          email: user.email || '',
+          lastLogin: new Date().toISOString()
+        });
+        
+        // Store updated list
+        localStorage.setItem('allLoggedInUsers', JSON.stringify(allUsers));
+      }
+    }
+  }, [isLoggedIn, user]);
+  
   // All available icons for cards
   const allIcons = [
     faBitcoin, faCss3Alt, faEthereum, faGithub, faHtml5, 
@@ -908,7 +929,7 @@ function App() {
                   />
                 </div>
 
-                <div className="flex-grow flex items-center justify-center overflow-hidden p-2">
+                <div className="flex-grow flex items-center justify-center overflow-y-auto py-2">
                   {isPaused && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-10 backdrop-blur-sm">
                       <motion.div 
@@ -941,13 +962,12 @@ function App() {
                     {cards.map((card, index) => (
                       <Card
                         key={card.id}
-                        icon={card.icon}
-                        flipped={flippedCards.includes(card.id) || matchedCards.includes(card.id)}
-                        matched={matchedCards.includes(card.id)}
+                        card={card}
+                        index={index}
+                        isFlipped={flippedCards.includes(card.id) || matchedCards.includes(card.id)}
+                        isMatched={matchedCards.includes(card.id)}
+                        isShaking={shakeCard === card.id}
                         onClick={() => handleCardClick(card.id)}
-                        shake={shakeCard === card.id}
-                        difficulty={difficulty}
-                        disabled={disableClicks || isPaused}
                       />
                     ))}
                   </motion.div>

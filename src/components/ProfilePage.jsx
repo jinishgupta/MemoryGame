@@ -16,10 +16,13 @@ import {
   faTimes,
   faCheck,
   faEdit,
-  faCoins
+  faCoins,
+  faEnvelope
 } from "@fortawesome/free-solid-svg-icons";
+import { useBedrockPassport } from "@bedrock_org/passport";
 
 const ProfilePage = ({ onBack }) => {
+  const { user } = useBedrockPassport();
   // State for user stats
   const [stats, setStats] = useState({
     gamesPlayed: 0,
@@ -238,180 +241,236 @@ const ProfilePage = ({ onBack }) => {
     stats.difficultyStats.hard.dailyChallengeAttempts;
 
   return (
-    <motion.div 
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <motion.div 
-        className="bg-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl border border-slate-600 overflow-hidden max-h-[90vh] overflow-y-auto"
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 30 }}
-      >
-        {/* Close button */}
-        <motion.button
-          className="absolute top-4 right-4 bg-slate-700 hover:bg-slate-600 text-white p-2 rounded-full z-10"
-          onClick={onBack}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-800 py-8 px-4 overflow-y-auto">
+      <div className="container max-w-4xl mx-auto">
+        {/* Back Button and Reset Stats */}
+        <div className="flex justify-between items-center mb-6">
+          <motion.button
+            onClick={onBack}
+            className="flex items-center text-white px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FontAwesomeIcon icon={faArrowLeft} className="mr-2" />
+            Back to Home
+          </motion.button>
+          
+          <motion.button
+            onClick={() => setShowResetModal(true)}
+            className="flex items-center text-white px-4 py-2 rounded-lg bg-red-700 hover:bg-red-600"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <FontAwesomeIcon icon={faTrash} className="mr-2" />
+            Reset Stats
+          </motion.button>
+        </div>
+        
+        {/* Header */}
+        <motion.div 
+          className="bg-slate-800 rounded-2xl p-8 mb-8 shadow-xl border border-slate-700"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          <FontAwesomeIcon icon={faTimes} />
-        </motion.button>
-        
-        {/* Profile Header */}
-        <div className="bg-gradient-to-r from-indigo-900 to-slate-800 text-white p-6 relative">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-            <div className="bg-indigo-600 w-20 h-20 rounded-full flex items-center justify-center shadow-lg border-2 border-indigo-400">
-              <FontAwesomeIcon icon={faUser} className="text-white text-3xl" />
+          <div className="flex items-center mb-6">
+            <div className="bg-indigo-600 p-4 rounded-xl mr-5">
+              <FontAwesomeIcon icon={faUser} className="text-white text-2xl" />
             </div>
-            
-            <div className="text-center sm:text-left">
-              <h2 className="text-2xl font-bold mb-2 flex items-center justify-center sm:justify-start gap-2">
-                {localStorage.getItem('orngPlayerName') || 'You'}
-                <motion.button
-                  onClick={() => setShowNameModal(true)}
-                  className="text-xs bg-slate-700 hover:bg-slate-600 p-1 rounded"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <FontAwesomeIcon icon={faEdit} className="text-white text-xs" />
-                </motion.button>
-              </h2>
-              
-              <div className="text-indigo-200 mb-2">
-                Member since {formatDate(stats.joinedDate)}
-              </div>
-              
-              <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
-                <div className="bg-indigo-700/50 px-3 py-1 rounded-full flex items-center gap-1">
-                  <FontAwesomeIcon icon={faCoins} className="text-yellow-400 text-sm" />
-                  <span className="font-medium">{parseInt(localStorage.getItem('orngPoints') || '0')} ORNG</span>
-                </div>
-                
-                <div className="bg-indigo-700/50 px-3 py-1 rounded-full flex items-center gap-1">
-                  <FontAwesomeIcon icon={faStar} className="text-yellow-400 text-sm" />
-                  <span className="font-medium">Rank: {localStorage.getItem('orngRank') || 'Novice'}</span>
-                </div>
-              </div>
+            <div className="flex-grow">
+              <h1 className="text-2xl font-bold text-white mr-3">{user?.displayName || stats.playerName || 'Anonymous User'}</h1>
+              {user?.email && (
+                <p className="text-indigo-300 mb-2">
+                  <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
+                  {user.email}
+                </p>
+              )}
+              <p className="text-slate-400">Player since {formatDate(stats.joinedDate)}</p>
             </div>
           </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div className="bg-slate-700/40 p-4 rounded-xl">
+              <FontAwesomeIcon icon={faClock} className="text-blue-400 mb-2" />
+              <p className="text-sm text-slate-400">Last Played</p>
+              <p className="text-white font-medium">{formatDate(stats.lastPlayed)}</p>
+            </div>
+            
+            <div className="bg-slate-700/40 p-4 rounded-xl">
+              <FontAwesomeIcon icon={faStar} className="text-yellow-400 mb-2" />
+              <p className="text-sm text-slate-400">Daily Challenge Streak</p>
+              <p className="text-white font-medium">
+                {parseInt(localStorage.getItem('dailyChallengeStreak') || '0')} days
+              </p>
+            </div>
+            
+            {localStorage.getItem('statsResetDate') && (
+              <div className="bg-slate-700/40 p-4 rounded-xl">
+                <FontAwesomeIcon icon={faTrash} className="text-red-400 mb-2" />
+                <p className="text-sm text-slate-400">Last Stats Reset</p>
+                <p className="text-white font-medium">
+                  {formatDate(localStorage.getItem('statsResetDate'))}
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Stats Overview */}
+        <motion.div 
+          className="bg-slate-800 rounded-2xl p-8 mb-8 shadow-xl border border-slate-700"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          <h2 className="text-2xl font-bold mb-6 flex items-center text-white">
+            <FontAwesomeIcon icon={faTrophy} className="mr-3 text-yellow-400" />
+            Performance Stats
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-slate-700/50 p-5 rounded-xl border border-slate-600 text-center">
+              <FontAwesomeIcon icon={faGamepad} className="text-blue-400 text-3xl mb-3" />
+              <h3 className="text-slate-300 mb-2">Games Played</h3>
+              <p className="text-4xl font-bold text-white">{stats.gamesPlayed}</p>
+            </div>
+            
+            <div className="bg-slate-700/50 p-5 rounded-xl border border-slate-600 text-center">
+              <FontAwesomeIcon icon={faStar} className="text-yellow-400 text-3xl mb-3" />
+              <h3 className="text-slate-300 mb-2">Games Won</h3>
+              <p className="text-4xl font-bold text-white">{stats.gamesWon}</p>
+            </div>
+            
+            <div className="bg-slate-700/50 p-5 rounded-xl border border-slate-600 text-center">
+              <FontAwesomeIcon icon={faPercent} className="text-green-400 text-3xl mb-3" />
+              <h3 className="text-slate-300 mb-2">Win Rate</h3>
+              <p className="text-4xl font-bold text-white">{winRate}%</p>
+            </div>
+          </div>
+        </motion.div>
+        
+        {/* Achievements and Records */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          {/* Best Time */}
+          <motion.div 
+            className="bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            <h2 className="text-xl font-bold mb-4 flex items-center text-white">
+              <FontAwesomeIcon icon={faClock} className="mr-3 text-blue-400" />
+              Best Time
+            </h2>
+            
+            <div className="flex justify-between items-center">
+              <span className="text-slate-300">Fastest completion:</span>
+              <span className="text-3xl font-bold text-white">
+                {stats.bestTime ? `${stats.bestTime}s` : "--"}
+              </span>
+            </div>
+          </motion.div>
+          
+          {/* Game History */}
+          <motion.div 
+            className="bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-700"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <h2 className="text-xl font-bold mb-4 flex items-center text-white">
+              <FontAwesomeIcon icon={faChartLine} className="mr-3 text-purple-400" />
+              Game History
+            </h2>
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-300">Easy mode games:</span>
+                <span className="font-semibold text-white">
+                  {stats.difficultyStats.easy.games}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-300">Medium mode games:</span>
+                <span className="font-semibold text-white">
+                  {stats.difficultyStats.medium.games}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-300">Hard mode games:</span>
+                <span className="font-semibold text-white">
+                  {stats.difficultyStats.hard.games}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <span className="text-slate-300 font-medium">Daily challenge attempts:</span>
+                <span className="font-semibold text-yellow-300">
+                  {totalDailyChallengeAttempts}
+                </span>
+              </div>
+            </div>
+          </motion.div>
         </div>
         
-        {/* Stats Section */}
-        <div className="p-6">
-          <h3 className="text-xl font-semibold mb-4 text-white">Your Performance</h3>
+        {/* Stats by Difficulty */}
+        <motion.div 
+          className="bg-slate-800 rounded-2xl p-8 shadow-xl border border-slate-700 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        >
+          <h2 className="text-2xl font-bold mb-6 flex items-center text-white">
+            <FontAwesomeIcon icon={faStar} className="mr-3 text-yellow-400" />
+            Difficulty Stats
+          </h2>
           
-          {/* Overall Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div className="bg-slate-700 p-4 rounded-lg text-center">
-              <div className="text-indigo-300 font-medium mb-1">Games</div>
-              <div className="text-white text-2xl font-bold">{stats.gamesPlayed}</div>
-            </div>
-            
-            <div className="bg-slate-700 p-4 rounded-lg text-center">
-              <div className="text-green-300 font-medium mb-1">Wins</div>
-              <div className="text-white text-2xl font-bold">{stats.gamesWon}</div>
-            </div>
-            
-            <div className="bg-slate-700 p-4 rounded-lg text-center">
-              <div className="text-amber-300 font-medium mb-1">Win Rate</div>
-              <div className="text-white text-2xl font-bold">{winRate}%</div>
-            </div>
-            
-            <div className="bg-slate-700 p-4 rounded-lg text-center">
-              <div className="text-yellow-300 font-medium mb-1">Best Time</div>
-              <div className="text-white text-2xl font-bold">{stats.bestTime || "-"}</div>
-            </div>
+          <div className="space-y-6">
+            {Object.entries(stats.difficultyStats).map(([difficulty, diffStats]) => (
+              <div key={difficulty} className="bg-slate-700/50 p-4 rounded-lg">
+                <h3 className="text-xl font-semibold mb-3 text-white capitalize">{difficulty}</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-sm text-slate-400">Win Rate</p>
+                    <p className="text-lg font-bold text-white">
+                      {diffStats.winRate}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">Best Time</p>
+                    <p className="text-lg font-bold text-white">
+                      {diffStats.bestTime ? `${diffStats.bestTime}s` : "--"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">Games Played</p>
+                    <p className="text-lg font-bold text-white">
+                      {diffStats.games}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-400">Daily Challenges</p>
+                    <p className="text-lg font-bold text-yellow-300">
+                      {diffStats.dailyChallengeAttempts}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          
-          {/* Difficulty Stats */}
-          <h3 className="text-lg font-semibold mb-3 text-white">By Difficulty</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[400px] text-white mb-6">
-              <thead>
-                <tr className="bg-slate-700">
-                  <th className="p-2 text-left">Difficulty</th>
-                  <th className="p-2 text-center">Games</th>
-                  <th className="p-2 text-center">Wins</th>
-                  <th className="p-2 text-center">Win Rate</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-slate-700">
-                  <td className="p-2 font-medium text-green-300">Easy</td>
-                  <td className="p-2 text-center">{stats.difficultyStats.easy.games}</td>
-                  <td className="p-2 text-center">{stats.difficultyStats.easy.wins}</td>
-                  <td className="p-2 text-center">{stats.difficultyStats.easy.winRate}%</td>
-                </tr>
-                <tr className="border-b border-slate-700">
-                  <td className="p-2 font-medium text-yellow-300">Medium</td>
-                  <td className="p-2 text-center">{stats.difficultyStats.medium.games}</td>
-                  <td className="p-2 text-center">{stats.difficultyStats.medium.wins}</td>
-                  <td className="p-2 text-center">{stats.difficultyStats.medium.winRate}%</td>
-                </tr>
-                <tr>
-                  <td className="p-2 font-medium text-red-300">Hard</td>
-                  <td className="p-2 text-center">{stats.difficultyStats.hard.games}</td>
-                  <td className="p-2 text-center">{stats.difficultyStats.hard.wins}</td>
-                  <td className="p-2 text-center">{stats.difficultyStats.hard.winRate}%</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Daily Challenge Stats */}
-          <h3 className="text-lg font-semibold mb-3 text-white">Daily Challenges</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-slate-700 p-4 rounded-lg text-center">
-              <div className="text-purple-300 font-medium mb-1">Completed</div>
-              <div className="text-white text-2xl font-bold">{stats.dailyChallengeStats.totalAttempts}</div>
-            </div>
-            
-            <div className="bg-slate-700 p-4 rounded-lg text-center">
-              <div className="text-purple-300 font-medium mb-1">Current Streak</div>
-              <div className="text-white text-2xl font-bold">{stats.dailyChallengeStats.streak}</div>
-            </div>
-            
-            <div className="bg-slate-700 p-4 rounded-lg text-center">
-              <div className="text-purple-300 font-medium mb-1">Best Streak</div>
-              <div className="text-white text-2xl font-bold">{stats.dailyChallengeStats.maxStreak}</div>
-            </div>
-          </div>
-          
-          {/* Achievement & Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <button 
-              onClick={() => setShowResetModal(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition-colors"
-            >
-              <FontAwesomeIcon icon={faTrash} className="mr-2" />
-              Reset Statistics
-            </button>
-            
-            <button 
-              onClick={onBack}
-              className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg font-medium transition-colors"
-            >
-              <FontAwesomeIcon icon={faTimes} className="mr-2" />
-              Close
-            </button>
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
       
-      {/* Reset Stats Modal */}
+      {/* Reset Confirmation Modal */}
       <AnimatePresence>
         {showResetModal && (
           <motion.div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div 
-              className="bg-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-red-500"
+              className="bg-slate-800 rounded-2xl p-8 max-w-md shadow-2xl border border-red-500 my-4"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
@@ -426,7 +485,7 @@ const ProfilePage = ({ onBack }) => {
                 This will permanently reset all your game statistics. This action cannot be undone.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex gap-4">
                 <motion.button
                   onClick={resetAllStats}
                   className="flex-1 bg-red-600 hover:bg-red-500 text-white py-3 px-4 rounded-lg font-bold flex items-center justify-center"
@@ -451,7 +510,7 @@ const ProfilePage = ({ onBack }) => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };
 

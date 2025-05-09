@@ -2,41 +2,21 @@ import React from 'react';
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-function Card({ card, index, isFlipped, isMatched, isShaking, onClick, icon, flipped, matched, shake, disabled, difficulty }) {
-  // Support both API styles
-  const cardIcon = icon || (card && card.icon);
-  const isCardFlipped = flipped || isFlipped;
-  const isCardMatched = matched || isMatched;  
-  const isCardShaking = shake || isShaking;
-  const cardOnClick = onClick;
-  
-  // Adjust icon size based on difficulty and screen size
-  const getIconSize = () => {
-    if (window.innerWidth < 640) {
-      return "2x"; // Smaller on mobile
-    }
-    
-    if (difficulty === "Hard") {
-      return "2x"; // Smaller for hard difficulty (more cards)
-    }
-    
-    return "3x";
-  };
-
+function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
   return (
     <div className="flip-card-container w-full aspect-square">
       <div 
-        className={`flip-card ${isCardFlipped ? 'flipped' : ''}`}
-        onClick={() => !isCardFlipped && !disabled && cardOnClick()}
+        className={`flip-card ${isFlipped ? 'flipped' : ''}`}
+        onClick={() => !isFlipped && onClick()}
       >
         <motion.div 
           className="flip-card-front"
           animate={{ 
-            boxShadow: isCardMatched ? "0 0 10px 3px rgba(167, 243, 208, 0.7)" : "none",
-            x: isCardShaking ? [0, -5, 5, -5, 5, 0] : 0
+            boxShadow: isMatched ? "0 0 10px 3px rgba(167, 243, 208, 0.7)" : "none",
+            x: isShaking ? [0, -5, 5, -5, 5, 0] : 0
           }}
-          transition={{ x: isCardShaking ? { duration: 0.5 } : {} }}
-          whileHover={!isCardFlipped && !disabled ? { scale: 1.03 } : {}}
+          transition={{ x: isShaking ? { duration: 0.5 } : {} }}
+          whileHover={!isFlipped ? { scale: 1.03 } : {}}
           whileTap={{ scale: 0.98 }}
         >
           <motion.div 
@@ -52,24 +32,24 @@ function Card({ card, index, isFlipped, isMatched, isShaking, onClick, icon, fli
         <motion.div 
           className="flip-card-back"
           animate={{ 
-            boxShadow: isCardMatched ? "0 0 15px 5px rgba(167, 243, 208, 0.7)" : "none"
+            boxShadow: isMatched ? "0 0 15px 5px rgba(167, 243, 208, 0.7)" : "none"
           }}
         >
           <motion.div
             animate={{ 
-              scale: isCardFlipped ? 1 : 0.8, 
-              opacity: isCardFlipped ? 1 : 0,
-              rotate: isCardMatched ? [0, 5, -5, 5, -5, 0] : 0
+              scale: isFlipped ? 1 : 0.8, 
+              opacity: isFlipped ? 1 : 0,
+              rotate: isMatched ? [0, 5, -5, 5, -5, 0] : 0
             }}
             transition={{ 
               duration: 0.3,
-              rotate: { duration: 0.5, repeat: isCardMatched ? 1 : 0 }
+              rotate: { duration: 0.5, repeat: isMatched ? 1 : 0 }
             }}
           >
             <FontAwesomeIcon 
-              icon={cardIcon} 
-              size={getIconSize()} 
-              className={isCardMatched ? "text-green-300" : "text-yellow-300"} 
+              icon={card.icon} 
+              size="3x" 
+              className={isMatched ? "text-green-300" : "text-yellow-300"} 
             />
           </motion.div>
         </motion.div>

@@ -3,6 +3,14 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    position: relative;
+    -webkit-overflow-scrolling: touch; /* Improve smooth scrolling on iOS */
+  }
+  
   body {
     font-family: 'Poppins', sans-serif;
     @apply bg-slate-900 text-white;
@@ -44,6 +52,14 @@
   
   .card-grid {
     @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6;
+  }
+  
+  /* Improve scrollable containers for modals */
+  .scrollable-container {
+    max-height: 80vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
@@ -123,10 +139,14 @@
 /* Game modals */
 .modal-overlay {
   @apply fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-content {
   @apply bg-slate-800 rounded-2xl p-6 w-full max-w-md shadow-xl border border-slate-600 transform transition-all;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
 
 /* Confetti animation for winning */
@@ -161,4 +181,30 @@
 
 .transform-style-3d {
   transform-style: preserve-3d;
+}
+
+/* Make fixed position modals scrollable on mobile */
+@media (max-width: 640px) {
+  .fixed-scrollable {
+    position: fixed;
+    inset: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .modal-inner {
+    margin: auto;
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+  }
+}
+
+/* Add viewport height fix for mobile browsers */
+.min-h-screen {
+  min-height: 100vh;
+  /* Fallback for browsers that don't support custom properties */
+  min-height: calc(var(--vh, 1vh) * 100);
 }
