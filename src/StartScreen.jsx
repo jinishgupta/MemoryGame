@@ -5,9 +5,9 @@ import { playSound } from './sounds.js';
 
 function StartScreen({ onStart, onDifficultyChange, selectedDifficulty, embedded = false }) {
   const difficulties = [
-    { name: "Easy", time: 90, pairs: 6 },
+    { name: "Easy", time: 60, pairs: 6 },
     { name: "Medium", time: 60, pairs: 8 },
-    { name: "Hard", time: 45, pairs: 10 }
+    { name: "Hard", time: 60, pairs: 9 }
   ];
 
   const handleDifficultyChange = (difficulty) => {

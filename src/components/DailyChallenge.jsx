@@ -19,8 +19,8 @@ const DailyChallenge = ({ onStart, isCompleted: propIsCompleted }) => {
   const [showAlert, setShowAlert] = useState(false);
   const [challengeInfo, setChallengeInfo] = useState({
     difficulty: "Hard",
-    time: 45,
-    pairs: 10,
+    time: 60,
+    pairs: 9,
     specialReward: "2x Points"
   });
 
@@ -62,9 +62,9 @@ const DailyChallenge = ({ onStart, isCompleted: propIsCompleted }) => {
     const dateHash = todayString.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     
     const difficultyOptions = ["Medium", "Hard"];
-    const timeOptions = [40, 45, 50];
-    // Update pairs options to ensure they don't exceed 10
-    const pairsOptions = [6, 8, 10];
+    const timeOptions = [60, 60, 60]; // All set to 60 seconds
+    // Update pairs options to be between 8-10
+    const pairsOptions = [8, 9, 10];
     
     // Use the hash to pick deterministic options for today
     const dailyDifficulty = difficultyOptions[dateHash % difficultyOptions.length];

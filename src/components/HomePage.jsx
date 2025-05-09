@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-// import { useBedrockPassport } from "@bedrock_org/passport";
+// Enable Orange ID integration
+import { useBedrockPassport } from "@bedrock_org/passport";
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,6 +19,7 @@ import {
 import { Profile } from './auth/index.jsx';
 import StartScreen from '../StartScreen';
 import DailyChallenge from './DailyChallenge';
+import Duel from './Duel';
 import { getPlayerPoints, getPlayerRank } from '../utils/leaderboard.js';
 
 const HomePage = ({ 
@@ -29,28 +31,20 @@ const HomePage = ({
   gamesPlayed, 
   bestTime, 
   winRate,
-  isDailyChallengeCompleted 
+  isDailyChallengeCompleted,
+  username
 }) => {
-  // Temporarily disable Orange ID authentication
-  // const { isLoggedIn, user, signOut } = useBedrockPassport();
-  const isLoggedIn = true; // Force logged in state
-  const user = { displayName: "Local User" }; // Mock user for local development
-  
-  const signOut = () => {
-    console.log("Sign out clicked - disabled for local development");
-    // No reload needed for local development
-  };
+  // Enable Orange ID integration
+  const { isLoggedIn, user, signOut } = useBedrockPassport();
   
   if (!isLoggedIn) {
     return null;
   }
-  
-  const userName = user?.displayName || user?.name || "Player";
 
   const handleLogout = async () => {
+    // Enable Orange ID logout
     await signOut();
-    // Comment out reload for local development
-    // window.location.reload();
+    window.location.reload();
   };
 
   const handleChallengeStart = (challengeInfo) => {
@@ -109,6 +103,9 @@ const HomePage = ({
   const displayOrngPoints = localStats.orngPoints;
   const displayRank = localStats.rank;
   
+  // Get display name from user object
+  const displayName = username || user?.displayName || "Player";
+  
   return (
     <motion.div 
       className="min-h-screen bg-gradient-to-br from-purple-900 via-slate-900 to-slate-800 text-white"
@@ -166,7 +163,7 @@ const HomePage = ({
             className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-white"
           >
             <FontAwesomeIcon icon={faSignOutAlt} className="mr-2" />
-            {userName}
+            {displayName}
           </button>
         </div>
       </header>
@@ -210,15 +207,23 @@ const HomePage = ({
             />
           </motion.div>
           
-          {/* Right column - Daily Challenge */}
+          {/* Right column - Game Options */}
           <motion.div
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.5 }}
+            className="space-y-6"
           >
+            {/* Daily Challenge */}
             <DailyChallenge 
               onStart={handleChallengeStart} 
               isCompleted={isDailyChallengeCompleted}
+            />
+            
+            {/* Duel Mode */}
+            <Duel 
+              onStart={handleChallengeStart}
+              isDisabled={isDailyChallengeCompleted === false}
             />
           </motion.div>
         </div>

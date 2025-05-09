@@ -12,24 +12,43 @@ import {
   calculatePoints, 
   addPointsToPlayer, 
   getPlayerPoints,
-  getPlayerRank
+  getPlayerRank,
+  processChallengeResult
 } from './utils/leaderboard.js';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faVolumeHigh, faVolumeXmark, faPlay } from "@fortawesome/free-solid-svg-icons";
+import { faVolumeHigh, faVolumeXmark, faPlay, faCrosshairs } from "@fortawesome/free-solid-svg-icons";
 import {
   faBitcoin, faCss3Alt, faEthereum, faGithub,
   faHtml5, faJava, faLinux, faReact, faJs, 
   faPython, faNode, faDocker, faPhp, faVuejs,
   faAngular, faBootstrap, faUbuntu, faApple
 } from "@fortawesome/free-brands-svg-icons";
-// import { useBedrockPassport } from "@bedrock_org/passport";
+// Enabling Orange ID integration
+import { useBedrockPassport } from "@bedrock_org/passport";
 import { Login } from "./components/auth/index.jsx";
 import HomePage from "./components/HomePage";
+import { ErrorBoundary } from 'react-error-boundary';
+
+function AuthErrorFallback({ error }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-800 flex flex-col items-center justify-center p-4 text-white">
+      <h2 className="text-2xl font-bold text-red-400 mb-4">Authentication Error</h2>
+      <p className="mb-4">{error.message}</p>
+      <p className="text-sm text-gray-400 mb-6">Try refreshing the page or clearing browser cache</p>
+      <button 
+        onClick={() => window.location.reload()}
+        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg"
+      >
+        Refresh Page
+      </button>
+    </div>
+  );
+}
 
 function App() {
-  // Temporarily disable Orange ID authentication
-  // const { isLoggedIn } = useBedrockPassport();
-  const isLoggedIn = true; // Force logged in state to bypass authentication
+  // Enable Orange ID integration
+  const { isLoggedIn, user } = useBedrockPassport();
+  // const isLoggedIn = true; // Remove this line as we're using real authentication now
   
   // All available icons for cards
   const allIcons = [
@@ -78,6 +97,14 @@ function App() {
   const [isDailyChallenge, setIsDailyChallenge] = useState(false);
   const [dailyChallengeAttempts, setDailyChallengeAttempts] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
+  
+  // Add state for duel mode
+  const [isDuel, setIsDuel] = useState(false);
+  const [duelInfo, setDuelInfo] = useState(null);
+  const [duelResult, setDuelResult] = useState(null);
+  
+  // Add this right after the isLoggedIn destructuring
+  const [authLoading, setAuthLoading] = useState(true);
   
   // Load all stats from localStorage
   useEffect(() => {
@@ -203,9 +230,9 @@ function App() {
   
   // Difficulty settings
   const difficultySettings = {
-    Easy: { time: 90, pairs: 6 },
+    Easy: { time: 60, pairs: 6 },
     Medium: { time: 60, pairs: 8 },
-    Hard: { time: 45, pairs: 10 }
+    Hard: { time: 60, pairs: 9 }
   };
 
   // Window size state for responsiveness
@@ -240,42 +267,59 @@ function App() {
   };
 
   const startGame = (challengeInfo = null) => {
-    // If this is a daily challenge, set the flag
+    // If this is a daily challenge or duel, set the appropriate flags
     if (challengeInfo) {
-      // Check if daily challenge has already been completed today
-      const today = new Date().toDateString();
-      const lastPlayed = localStorage.getItem('dailyChallengeLastPlayed');
-      const isCompleted = localStorage.getItem('dailyChallengeCompleted') === 'true';
-      
-      // If challenge was already completed today, return without starting game
-      if (lastPlayed === today && isCompleted) {
-        console.log("Daily challenge already completed today");
-        // Show alert to user
-        alert("You have already completed today's challenge. Come back tomorrow for a new challenge!");
-        return;
+      if (challengeInfo.isDuel) {
+        // This is a duel
+        setIsDuel(true);
+        setDuelInfo(challengeInfo);
+        localStorage.setItem('inDuel', 'true');
+        
+        // Use the difficulty settings from the duel
+        setDifficulty(challengeInfo.difficulty);
+        
+        // Use the specific duel settings
+        const time = challengeInfo.time;
+        const pairs = challengeInfo.pairs;
+        
+        setTimer(time);
+        initialTimeRef.current = time; // Store initial time for stats
+        setCards(generateShuffledCards(pairs));
+      } else {
+        // This is a daily challenge
+        setIsDailyChallenge(true);
+        setDailyChallengeAttempts(prev => prev + 1);
+        
+        // Store in localStorage that we're in a daily challenge
+        localStorage.setItem('inDailyChallenge', 'true');
+        
+        // Update total daily challenge attempts counter
+        const newAttempts = dailyChallengeAttempts + 1;
+        localStorage.setItem('dailyChallengeAttempts', newAttempts.toString());
+        
+        // Update difficulty-specific daily challenge attempts
+        // This is the one place we should track attempts to avoid double-counting
+        const difficultyKey = challengeInfo.difficulty.toLowerCase();
+        const difficultyAttempts = parseInt(localStorage.getItem(`${difficultyKey}DailyChallengeAttempts`) || '0') + 1;
+        localStorage.setItem(`${difficultyKey}DailyChallengeAttempts`, difficultyAttempts.toString());
+        
+        // Use the challenge difficulty and settings
+        setDifficulty(challengeInfo.difficulty);
+        
+        // Use the specific challenge settings
+        const time = challengeInfo.time;
+        const pairs = challengeInfo.pairs;
+        
+        setTimer(time);
+        initialTimeRef.current = time; // Store initial time for stats
+        setCards(generateShuffledCards(pairs));
       }
-      
-      setIsDailyChallenge(true);
-      setDailyChallengeAttempts(prev => prev + 1);
-      
-      // Store in localStorage that we're in a daily challenge
-      localStorage.setItem('inDailyChallenge', 'true');
-      localStorage.setItem('dailyChallengeAttempts', (dailyChallengeAttempts + 1).toString());
-      
-      // Use the challenge difficulty and settings
-      setDifficulty(challengeInfo.difficulty);
-      
-      // Use the specific challenge settings
-      const time = challengeInfo.time;
-      const pairs = challengeInfo.pairs;
-      
-      setTimer(time);
-      initialTimeRef.current = time; // Store initial time for stats
-      setCards(generateShuffledCards(pairs));
     } else {
-      // For regular games, explicitly set isDailyChallenge to false
+      // For regular games, explicitly set flags to false
       setIsDailyChallenge(false);
+      setIsDuel(false);
       localStorage.removeItem('inDailyChallenge');
+      localStorage.removeItem('inDuel');
       
       // Use the difficulty settings for regular game
       const { time, pairs } = difficultySettings[difficulty];
@@ -284,6 +328,9 @@ function App() {
       initialTimeRef.current = time; // Store initial time for stats
       setCards(generateShuffledCards(pairs));
     }
+    
+    // Reset duel result
+    setDuelResult(null);
     
     setFlippedCards([]);
     setMatchedCards([]);
@@ -297,11 +344,6 @@ function App() {
     // Record last played time
     const now = new Date().toISOString();
     localStorage.setItem('lastPlayed', now);
-    
-    // Update difficulty-specific stats - track games started
-    const difficultyKey = difficulty.toLowerCase();
-    const difficultyGames = parseInt(localStorage.getItem(`${difficultyKey}Games`) || '0') + 1;
-    localStorage.setItem(`${difficultyKey}Games`, difficultyGames.toString());
     
     // Update the currentStats to reflect the latest values from localStorage
     const latestGamesPlayed = parseInt(localStorage.getItem('gamesPlayed') || '0');
@@ -366,11 +408,6 @@ function App() {
     const now = new Date().toISOString();
     localStorage.setItem('lastPlayed', now);
     
-    // Update difficulty-specific games count immediately
-    const difficultyKey = difficulty.toLowerCase();
-    const difficultyGames = parseInt(localStorage.getItem(`${difficultyKey}Games`) || '0') + 1;
-    localStorage.setItem(`${difficultyKey}Games`, difficultyGames.toString());
-    
     setTimeout(() => {
       setCards(generateShuffledCards(pairs));
       setDisableClicks(false);
@@ -400,14 +437,33 @@ function App() {
   const returnToHome = () => {
     // If returning from a daily challenge that wasn't completed, mark as loss
     if (isDailyChallenge && result !== "win") {
-      // Update stats to record the loss but don't lock the challenge
-      const lossStats = updateGameStats(false);
-      setCurrentStats(lossStats);
-      
-      // Also track this as a daily challenge attempt for the specific difficulty
-      const difficultyKey = difficulty.toLowerCase();
-      const difficultyAttempts = parseInt(localStorage.getItem(`${difficultyKey}DailyChallengeAttempts`) || '0') + 1;
-      localStorage.setItem(`${difficultyKey}DailyChallengeAttempts`, difficultyAttempts.toString());
+      // Only update stats if the game wasn't already marked as a loss
+      if (result !== "lose") {
+        // Update stats to record the loss but don't lock the challenge
+        const lossStats = updateGameStats(false);
+        setCurrentStats(lossStats);
+        
+        // Do not increment challenge attempts here since we already do this in startGame
+        // This prevents double-counting attempts
+      }
+    }
+    // If returning from a duel that wasn't completed, mark as loss
+    else if (isDuel && result !== "win" && duelInfo) {
+      // Only update stats if the game wasn't already marked as a loss
+      if (result !== "lose") {
+        // Process the duel as a loss
+        const duelResult = processChallengeResult({
+          opponent: duelInfo.opponent,
+          betAmount: duelInfo.betAmount
+        }, false);
+        
+        // Store the result
+        setDuelResult(duelResult);
+        
+        // Update stats
+        const lossStats = updateGameStats(false);
+        setCurrentStats(lossStats);
+      }
     }
     
     // Always reset game state no matter what
@@ -416,6 +472,8 @@ function App() {
     setIsPaused(false);
     setGameOver(false);
     setIsDailyChallenge(false);
+    setIsDuel(false);
+    setDuelInfo(null);
     
     // Clear any running timer
     if (timerRef.current) {
@@ -425,8 +483,9 @@ function App() {
     
     playSound('click');
     
-    // Remove the flag from localStorage
+    // Remove the flags from localStorage
     localStorage.removeItem('inDailyChallenge');
+    localStorage.removeItem('inDuel');
   };
   
   const handleToggleSound = () => {
@@ -459,6 +518,11 @@ function App() {
     let newBestTime = bestTime;
     let earnedOrngPoints = 0;
     
+    // Make sure we're incrementing the games played for the correct difficulty
+    const difficultyKey = difficulty.toLowerCase();
+    let difficultyGames = parseInt(localStorage.getItem(`${difficultyKey}Games`) || '0') + 1;
+    localStorage.setItem(`${difficultyKey}Games`, difficultyGames.toString());
+    
     if (isWin) {
       // Calculate time spent if win
       const timeSpent = initialTimeRef.current - timer;
@@ -473,9 +537,7 @@ function App() {
         localStorage.setItem('bestTime', timeSpent.toString());
       }
       
-      // Update difficulty-specific stats
-      const difficultyKey = difficulty.toLowerCase();
-      
+      // Update difficulty-specific stats for wins
       // Update difficulty wins count
       const difficultyWins = parseInt(localStorage.getItem(`${difficultyKey}Wins`) || '0') + 1;
       localStorage.setItem(`${difficultyKey}Wins`, difficultyWins.toString());
@@ -486,27 +548,28 @@ function App() {
         localStorage.setItem(`${difficultyKey}BestTime`, timeSpent.toString());
       }
       
-      // Award ORNG points based on difficulty and game type
-      const streak = parseInt(localStorage.getItem('dailyChallengeStreak') || '0');
-      earnedOrngPoints = calculatePoints(difficulty, isDailyChallenge, streak);
+      // Daily challenge-specific handling is done separately in the completion handler
+      // We don't need to update dailyChallengeAttempts here to avoid double-counting
       
-      // Add points to the player's account
-      const pointsResult = addPointsToPlayer(earnedOrngPoints);
-      setEarnedPoints(earnedOrngPoints);
-      
-      console.log(`Earned ${earnedOrngPoints} ORNG points! Total: ${pointsResult.currentPoints}`);
+      // Award ORNG points based on difficulty and game type (only in regular games and daily challenges)
+      // For duels, points are handled in the processChallengeResult function
+      if (!isDuel) {
+        const streak = parseInt(localStorage.getItem('dailyChallengeStreak') || '0');
+        earnedOrngPoints = calculatePoints(difficulty, isDailyChallenge, streak);
+        
+        // Add points to the player's account
+        const pointsResult = addPointsToPlayer(earnedOrngPoints);
+        setEarnedPoints(earnedOrngPoints);
+        
+        console.log(`Earned ${earnedOrngPoints} ORNG points! Total: ${pointsResult.currentPoints}`);
+      }
     }
     
-    // Calculate win rate for this difficulty - do this immediately
-    const difficultyKey = difficulty.toLowerCase();
-    const difficultyGames = parseInt(localStorage.getItem(`${difficultyKey}Games`) || '0') + 1;
-    localStorage.setItem(`${difficultyKey}Games`, difficultyGames.toString());
-    
-    if (difficultyGames > 0) {
-      const wins = parseInt(localStorage.getItem(`${difficultyKey}Wins`) || '0');
-      const winRate = Math.round((wins / difficultyGames) * 100);
-      localStorage.setItem(`${difficultyKey}WinRate`, winRate.toString());
-    }
+    // Calculate win rate for this difficulty - do this after recording win/loss
+    // Use the updated values to ensure accuracy
+    const difficultyWins = parseInt(localStorage.getItem(`${difficultyKey}Wins`) || '0');
+    const difficultyWinRate = difficultyGames > 0 ? Math.round((difficultyWins / difficultyGames) * 100) : 0;
+    localStorage.setItem(`${difficultyKey}WinRate`, difficultyWinRate.toString());
     
     // Calculate and update overall win rate
     const newWinRate = Math.round((newGamesWon / newGamesPlayed) * 100);
@@ -514,6 +577,25 @@ function App() {
     
     // Get current ORNG points
     const currentOrngPoints = getPlayerPoints();
+    
+    // Handle duel-specific logic
+    if (isDuel && duelInfo) {
+      // Process the challenge result
+      const duelResult = processChallengeResult({
+        opponent: duelInfo.opponent,
+        betAmount: duelInfo.betAmount
+      }, isWin);
+      
+      // Store the result for the game over screen
+      setDuelResult(duelResult);
+      
+      // If the duel result processing was successful
+      if (duelResult) {
+        // Update earned points to reflect duel winnings instead of regular points
+        earnedOrngPoints = isWin ? duelInfo.betAmount : 0;
+        setEarnedPoints(earnedOrngPoints);
+      }
+    }
     
     // Return the updated stats for immediate use
     return {
@@ -530,7 +612,7 @@ function App() {
   useEffect(() => {
     if (!isRunning || gameOver || isPaused) {
       if (timerRef.current) {
-        clearInterval(timerRef.current);
+      clearInterval(timerRef.current);
         timerRef.current = null;
       }
       return;
@@ -742,134 +824,159 @@ function App() {
       // Make isCompleted state true immediately
       setIsCompleted(true);
     } else if (isDailyChallenge && result === "lose") {
-      // Track failed attempt in difficulty-specific stats
-      const difficultyKey = difficulty.toLowerCase();
-      const difficultyAttempts = parseInt(localStorage.getItem(`${difficultyKey}DailyChallengeAttempts`) || '0') + 1;
-      localStorage.setItem(`${difficultyKey}DailyChallengeAttempts`, difficultyAttempts.toString());
+      // Do not track daily challenge attempts again here
+      // They are already tracked once in startGame
       
       // Don't mark as completed, allowing more attempts
       localStorage.removeItem('inDailyChallenge');
     }
   }, [isDailyChallenge, result, difficulty]);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-800">
-      {/* Sound toggle button - moved to bottom right */}
-      <button 
-        className="fixed bottom-4 right-4 z-50 bg-slate-800 p-3 rounded-full shadow-lg border border-slate-600"
-        onClick={handleToggleSound}
-        aria-label={soundOn ? "Mute sound" : "Enable sound"}
-      >
-        <FontAwesomeIcon 
-          icon={soundOn ? faVolumeHigh : faVolumeXmark} 
-          className={soundOn ? "text-yellow-300" : "text-white"}
-          size="lg"
-        />
-      </button>
-      
-      {/* Game states */}
-      {!isLoggedIn ? (
-        <Login />
-      ) : showProfile ? (
-        <ProfilePage onBack={handleCloseProfile} />
-      ) : showLeaderboard ? (
-        <Leaderboard onBack={handleCloseLeaderboard} />
-      ) : !gameStarted ? (
-        <div className="flex flex-col min-h-screen">
-          <HomePage 
-            onStart={startGame} 
-            onDifficultyChange={setDifficulty}
-            selectedDifficulty={difficulty}
-            onOpenProfile={handleOpenProfile}
-            onOpenLeaderboard={handleOpenLeaderboard}
-            gamesPlayed={gamesPlayed}
-            bestTime={bestTime}
-            winRate={winRate}
-            isDailyChallengeCompleted={isCompleted}
-          />
-        </div>
-      ) : (
-        <div className="h-screen flex flex-col py-2 px-2 sm:py-4 sm:px-4">
-          <div className="flex-none mb-4">
-            <GameHeader 
-              timer={timer} 
-              pairs={matchedPairs} 
-              totalPairs={totalPairs}
-              difficulty={difficulty}
-              onRestart={restartGame}
-              onHome={returnToHome}
-              isPaused={isPaused}
-              onPauseToggle={handlePauseToggle}
-              onProfile={handleOpenProfile}
-              onLeaderboard={handleOpenLeaderboard}
-              isDailyChallenge={isDailyChallenge}
-              orngPoints={currentStats.orngPoints}
-            />
-          </div>
+  // Add this useEffect after other useEffects
+  useEffect(() => {
+    // Give auth a moment to initialize
+    const timer = setTimeout(() => {
+      setAuthLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
-          <div className="flex-grow flex items-center justify-center overflow-hidden p-2">
-            {isPaused && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-10 backdrop-blur-sm">
-                <motion.div 
-                  className="bg-slate-800 p-6 rounded-xl border-2 border-yellow-500 shadow-xl text-center"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                >
-                  <h2 className="text-2xl font-bold text-yellow-300 mb-4">Game Paused</h2>
-                  <p className="text-white mb-6">Take a break! Your progress is saved.</p>
-                  <motion.button
-                    onClick={handlePauseToggle}
-                    className="px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold rounded-lg"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+  return (
+    <ErrorBoundary FallbackComponent={AuthErrorFallback}>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-800">
+        {authLoading ? (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-pulse text-white">Loading...</div>
+          </div>
+        ) : !isLoggedIn ? (
+          <Login />
+        ) : (
+          <>
+            {/* Sound toggle button - moved to bottom right */}
+            <button 
+              className="fixed bottom-4 right-4 z-50 bg-slate-800 p-3 rounded-full shadow-lg border border-slate-600"
+              onClick={handleToggleSound}
+              aria-label={soundOn ? "Mute sound" : "Enable sound"}
+            >
+              <FontAwesomeIcon 
+                icon={soundOn ? faVolumeHigh : faVolumeXmark} 
+                className={soundOn ? "text-yellow-300" : "text-white"}
+                size="lg"
+              />
+            </button>
+            
+            {/* Game states */}
+            {showProfile ? (
+              <ProfilePage onBack={handleCloseProfile} />
+            ) : showLeaderboard ? (
+              <Leaderboard onBack={handleCloseLeaderboard} />
+            ) : !gameStarted ? (
+              <div className="flex flex-col min-h-screen">
+                <HomePage 
+                  onStart={startGame} 
+                  onDifficultyChange={setDifficulty}
+                  selectedDifficulty={difficulty}
+                  onOpenProfile={handleOpenProfile}
+                  onOpenLeaderboard={handleOpenLeaderboard}
+                  gamesPlayed={gamesPlayed}
+                  bestTime={bestTime}
+                  winRate={winRate}
+                  isDailyChallengeCompleted={isCompleted}
+                  username={user?.displayName}
+                />
+              </div>
+            ) : (
+              <div className="h-screen flex flex-col py-2 px-2 sm:py-4 sm:px-4">
+                <div className="flex-none mb-4">
+                  <GameHeader 
+                    timer={timer} 
+                    pairs={matchedPairs} 
+                    totalPairs={totalPairs}
+                    difficulty={difficulty}
+                    onRestart={restartGame}
+                    onHome={returnToHome}
+                    isPaused={isPaused}
+                    onPauseToggle={handlePauseToggle}
+                    onProfile={handleOpenProfile}
+                    onLeaderboard={handleOpenLeaderboard}
+                    isDailyChallenge={isDailyChallenge}
+                    isDuel={isDuel}
+                    duelInfo={duelInfo}
+                    orngPoints={currentStats.orngPoints}
+                    username={user?.displayName}
+                  />
+                </div>
+
+                <div className="flex-grow flex items-center justify-center overflow-hidden p-2">
+                  {isPaused && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-10 backdrop-blur-sm">
+                      <motion.div 
+                        className="bg-slate-800 p-6 rounded-xl border-2 border-yellow-500 shadow-xl text-center"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      >
+                        <h2 className="text-2xl font-bold text-yellow-300 mb-4">Game Paused</h2>
+                        <p className="text-white mb-6">Take a break! Your progress is saved.</p>
+                        <motion.button
+                          onClick={handlePauseToggle}
+                          className="px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold rounded-lg"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <FontAwesomeIcon icon={faPlay} className="mr-2" />
+                          Resume Game
+                        </motion.button>
+                      </motion.div>
+                    </div>
+                  )}
+
+                  <motion.div 
+                    className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 w-full max-w-5xl mx-auto"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
                   >
-                    <FontAwesomeIcon icon={faPlay} className="mr-2" />
-                    Resume Game
-                  </motion.button>
-                </motion.div>
+                    {cards.map((card, index) => (
+                      <Card
+                        key={card.id}
+                        icon={card.icon}
+                        flipped={flippedCards.includes(card.id) || matchedCards.includes(card.id)}
+                        matched={matchedCards.includes(card.id)}
+                        onClick={() => handleCardClick(card.id)}
+                        shake={shakeCard === card.id}
+                        difficulty={difficulty}
+                        disabled={disableClicks || isPaused}
+                      />
+                    ))}
+                  </motion.div>
+                </div>
               </div>
             )}
 
-            <motion.div 
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 w-full max-w-5xl mx-auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              {cards.map((card, index) => (
-                <div key={card.id} className="aspect-square">
-                  <Card
-                    card={card}
-                    index={index}
-                    isFlipped={flippedCards.includes(index) || matchedCards.includes(index)}
-                    isMatched={matchedCards.includes(index)}
-                    isShaking={shakeCard?.includes(index)}
-                    onClick={() => handleCardClick(index)}
-                  />
-                </div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
-      )}
-
-      {/* Game over screen */}
-      <AnimatePresence>
-        {gameOver && (
-          <GameOver 
-            result={result} 
-            matchedPairs={matchedPairs}
-            totalPairs={totalPairs}
-            onRestart={restartGame}
-            onHome={returnToHome}
-            currentStats={currentStats}
-            isDailyChallenge={isDailyChallenge}
-            earnedPoints={earnedPoints}
-          />
+            {/* Game over screen */}
+            <AnimatePresence>
+              {gameOver && (
+                <GameOver 
+                  result={result} 
+                  matchedPairs={matchedPairs}
+                  totalPairs={totalPairs}
+                  onRestart={restartGame}
+                  onHome={returnToHome}
+                  currentStats={currentStats}
+                  isDailyChallenge={isDailyChallenge}
+                  isDuel={isDuel}
+                  duelInfo={duelInfo}
+                  duelResult={duelResult}
+                  earnedPoints={earnedPoints}
+                />
+              )}
+            </AnimatePresence>
+          </>
         )}
-      </AnimatePresence>
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }
 

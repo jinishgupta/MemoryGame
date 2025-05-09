@@ -121,6 +121,127 @@ export const addPointsToPlayer = (points) => {
   };
 };
 
+// Process challenge results - add/subtract points based on challenge outcome
+export const processChallengeResult = (challengeInfo, isWin) => {
+  const { opponent, betAmount } = challengeInfo;
+  const playerId = getCurrentPlayerId();
+  const leaderboard = getLeaderboard();
+  
+  // Find current player and opponent in leaderboard
+  const playerIndex = leaderboard.findIndex(p => p.id === playerId);
+  const opponentIndex = leaderboard.findIndex(p => p.id === opponent.id);
+  
+  if (playerIndex === -1 || opponentIndex === -1) {
+    console.error("Player or opponent not found in leaderboard");
+    return null;
+  }
+  
+  // Process the bet outcome
+  if (isWin) {
+    // Player wins, gets opponent's bet amount
+    leaderboard[playerIndex].points += betAmount;
+    
+    // Opponent loses the bet amount (but ensure they don't go below 0)
+    leaderboard[opponentIndex].points = Math.max(0, leaderboard[opponentIndex].points - betAmount);
+    
+    // Track challenge wins for stats
+    localStorage.setItem('challengeWins', (parseInt(localStorage.getItem('challengeWins') || '0') + 1).toString());
+    
+    // Store challenge history
+    addChallengeToHistory({
+      opponent: opponent.name,
+      betAmount,
+      outcome: 'win',
+      date: new Date().toISOString(),
+      pointsEarned: betAmount
+    });
+  } else {
+    // Player loses, forfeits bet amount
+    leaderboard[playerIndex].points = Math.max(0, leaderboard[playerIndex].points - betAmount);
+    
+    // Opponent wins the bet
+    leaderboard[opponentIndex].points += betAmount;
+    
+    // Track challenge losses for stats
+    localStorage.setItem('challengeLosses', (parseInt(localStorage.getItem('challengeLosses') || '0') + 1).toString());
+    
+    // Store challenge history
+    addChallengeToHistory({
+      opponent: opponent.name,
+      betAmount,
+      outcome: 'loss',
+      date: new Date().toISOString(),
+      pointsLost: betAmount
+    });
+  }
+  
+  // Resort the leaderboard
+  leaderboard.sort((a, b) => b.points - a.points);
+  
+  // Save updated leaderboard
+  localStorage.setItem('orngLeaderboard', JSON.stringify(leaderboard));
+  
+  // Calculate new rank
+  const newRank = leaderboard.findIndex(p => p.id === playerId) + 1;
+  const currentPoints = leaderboard[playerIndex].points;
+  
+  return {
+    isWin,
+    pointsEarned: isWin ? betAmount : 0,
+    pointsLost: isWin ? 0 : betAmount,
+    currentPoints,
+    newRank
+  };
+};
+
+// Add a challenge to the player's history
+const addChallengeToHistory = (challenge) => {
+  const history = JSON.parse(localStorage.getItem('challengeHistory') || '[]');
+  history.unshift(challenge); // Add to beginning
+  
+  // Keep only the last 20 challenges
+  const trimmedHistory = history.slice(0, 20);
+  localStorage.setItem('challengeHistory', JSON.stringify(trimmedHistory));
+};
+
+// Get the player's challenge history
+export const getChallengeHistory = () => {
+  return JSON.parse(localStorage.getItem('challengeHistory') || '[]');
+};
+
+// Get challenge stats (total wins, losses, points earned, points lost)
+export const getChallengeStats = () => {
+  const wins = parseInt(localStorage.getItem('challengeWins') || '0');
+  const losses = parseInt(localStorage.getItem('challengeLosses') || '0');
+  const history = getChallengeHistory();
+  
+  // Calculate points earned and lost
+  let pointsEarned = 0;
+  let pointsLost = 0;
+  
+  history.forEach(challenge => {
+    if (challenge.outcome === 'win') {
+      pointsEarned += challenge.pointsEarned || 0;
+    } else {
+      pointsLost += challenge.pointsLost || 0;
+    }
+  });
+  
+  // Calculate win rate
+  const totalChallenges = wins + losses;
+  const winRate = totalChallenges > 0 ? Math.round((wins / totalChallenges) * 100) : 0;
+  
+  return {
+    wins,
+    losses,
+    totalChallenges,
+    winRate,
+    pointsEarned,
+    pointsLost,
+    netGain: pointsEarned - pointsLost
+  };
+};
+
 // Get the current player's rank
 export const getPlayerRank = () => {
   const playerId = getCurrentPlayerId();

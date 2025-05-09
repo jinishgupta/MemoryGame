@@ -11,15 +11,15 @@ const Login = () => {
         logo="https://irp.cdn-website.com/e81c109a/dms3rep/multi/orange-web3-logo-v2a-20241018.svg"
         logoAlt="Orange Web3"
         walletButtonText="Connect Wallet"
-        showConnectWallet={false}
+        showConnectWallet={true}
         separatorText="OR"
 
         // Feature toggles
         features={{
-          enableWalletConnect: false,
+          enableWalletConnect: true,
           enableAppleLogin: true,
           enableGoogleLogin: true,
-          enableEmailLogin: false,
+          enableEmailLogin: true,
         }}
 
         // Style options

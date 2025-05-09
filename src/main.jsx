@@ -2,11 +2,25 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-// Temporarily disable Orange ID imports for local development
-// import { PassportProvider } from './components/auth/index.jsx'
-// import { AuthCallback } from './components/auth/index.jsx'
-// import '@bedrock_org/passport/dist/style.css'
+import { BrowserRouter, Routes, Route, createRoutesFromElements } from 'react-router-dom'
+// Enable Orange ID integration
+import { PassportProvider } from './components/auth/index.jsx'
+import { AuthCallback } from './components/auth/index.jsx'
+import '@bedrock_org/passport/dist/style.css'
+
+// Suppress React Router future flag warnings
+const originalConsoleWarn = console.warn;
+console.warn = function(msg, ...args) {
+  if (typeof msg === 'string' && (
+    msg.includes('React Router Future Flag Warning') || 
+    msg.includes('v7_startTransition') || 
+    msg.includes('v7_relativeSplatPath')
+  )) {
+    // Suppress these specific warnings
+    return;
+  }
+  originalConsoleWarn(msg, ...args);
+};
 
 try {
   // Dynamically import memory icon
@@ -32,14 +46,19 @@ const root = document.getElementById('root');
 
 createRoot(root).render(
   <React.StrictMode>
-    {/* Temporarily disable PassportProvider for local development */}
-    {/* <PassportProvider> */}
-      <BrowserRouter>
+    {/* Enable Orange ID PassportProvider */}
+    <PassportProvider>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}
+      >
         <Routes>
-          {/* <Route path="/auth/callback" element={<AuthCallback />} /> */}
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="*" element={<App />} />
         </Routes>
       </BrowserRouter>
-    {/* </PassportProvider> */}
+    </PassportProvider>
   </React.StrictMode>,
 )
