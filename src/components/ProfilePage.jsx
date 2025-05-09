@@ -280,7 +280,7 @@ const ProfilePage = ({ onBack }) => {
             </div>
             <div className="flex-grow">
               <h1 className="text-2xl font-bold text-white mr-3">
-  {user?.displayName || localStorage.getItem('orngPlayerName') || user?.name || 'Anonymous User'}
+  {user?.displayName || localStorage.getItem('orngPlayerName') || user?.name || 'You'}
 </h1>
               {user?.email && (
                 <p className="text-indigo-300 mb-2">
