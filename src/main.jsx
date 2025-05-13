@@ -53,9 +53,22 @@ function setViewportHeight() {
 // Set initial viewport height
 setViewportHeight();
 
-// Update on resize and orientation change
-window.addEventListener('resize', setViewportHeight);
-window.addEventListener('orientationchange', setViewportHeight);
+// Update after a small delay to ensure accurate calculation
+setTimeout(setViewportHeight, 100);
+
+// Update on resize, orientation change, and scroll
+window.addEventListener('resize', () => {
+  // Add small timeout to ensure the browser has completed any UI changes
+  setTimeout(setViewportHeight, 50);
+});
+window.addEventListener('orientationchange', () => {
+  // Orientation changes need a slightly longer delay
+  setTimeout(setViewportHeight, 200);
+});
+window.addEventListener('scroll', setViewportHeight, { passive: true });
+
+// Also update when document is fully loaded
+document.addEventListener('DOMContentLoaded', setViewportHeight);
 
 createRoot(root).render(
   <React.StrictMode>

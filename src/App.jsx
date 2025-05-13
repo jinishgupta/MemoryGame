@@ -28,6 +28,8 @@ import { useBedrockPassport } from "@bedrock_org/passport";
 import { Login } from "./components/auth/index.jsx";
 import HomePage from "./components/HomePage";
 import { ErrorBoundary } from 'react-error-boundary';
+// Firebase imports
+import { saveUserToFirebase, updateUserPoints, syncLocalStatsWithFirebase, getUserData } from './firebase/firebaseService';
 
 function AuthErrorFallback({ error }) {
   return (
@@ -50,9 +52,33 @@ function App() {
   const { isLoggedIn, user } = useBedrockPassport();
   // const isLoggedIn = true; // Remove this line as we're using real authentication now
   
-  // Track logged-in users
+  // Track logged-in users and save to Firebase
   useEffect(() => {
     if (isLoggedIn && user) {
+      // Save user to Firebase
+      saveUserToFirebase(user).then(success => {
+        if (success) {
+          console.log('User saved to Firebase successfully');
+          
+          // Load user data from Firebase
+          getUserData(user.id).then(userData => {
+            if (userData) {
+              console.log('User data retrieved from Firebase');
+              
+              // Sync local stats with Firebase
+              const localStats = {
+                gamesPlayed: parseInt(localStorage.getItem('gamesPlayed') || '0'),
+                gamesWon: parseInt(localStorage.getItem('gamesWon') || '0'),
+                bestTime: parseInt(localStorage.getItem('bestTime') || '0') || null
+              };
+              
+              syncLocalStatsWithFirebase(user.id, localStats);
+            }
+          });
+        }
+      });
+      
+      // Also save to localStorage for backward compatibility
       const allUsers = JSON.parse(localStorage.getItem('allLoggedInUsers') || '[]');
       
       // Check if user is already in the list
@@ -544,9 +570,12 @@ function App() {
     let difficultyGames = parseInt(localStorage.getItem(`${difficultyKey}Games`) || '0') + 1;
     localStorage.setItem(`${difficultyKey}Games`, difficultyGames.toString());
     
+    // Calculate time spent if it's a win
+    let timeSpent = 0;
+    
     if (isWin) {
       // Calculate time spent if win
-      const timeSpent = initialTimeRef.current - timer;
+      timeSpent = initialTimeRef.current - timer;
       newGamesWon = gamesWon + 1;
       setGamesWon(newGamesWon);
       localStorage.setItem('gamesWon', newGamesWon.toString());
@@ -572,17 +601,55 @@ function App() {
       // Daily challenge-specific handling is done separately in the completion handler
       // We don't need to update dailyChallengeAttempts here to avoid double-counting
       
-      // Award ORNG points based on difficulty and game type (only in regular games and daily challenges)
+      // Award points based on difficulty and game type (only in regular games and daily challenges)
       // For duels, points are handled in the processChallengeResult function
       if (!isDuel) {
         const streak = parseInt(localStorage.getItem('dailyChallengeStreak') || '0');
         earnedOrngPoints = calculatePoints(difficulty, isDailyChallenge, streak);
         
-        // Add points to the player's account
+        // Add points to the player's account (both local and Firebase)
         const pointsResult = addPointsToPlayer(earnedOrngPoints);
         setEarnedPoints(earnedOrngPoints);
         
-        console.log(`Earned ${earnedOrngPoints} ORNG points! Total: ${pointsResult.currentPoints}`);
+        console.log(`Earned ${earnedOrngPoints} points! Total: ${pointsResult.currentPoints}`);
+        
+        // If user is logged in, update Firebase
+        if (isLoggedIn && user) {
+          // Create game result object for Firebase
+          const gameResult = {
+            isWin: true,
+            difficulty: difficulty,
+            timeSpent: timeSpent,
+            isDailyChallenge: isDailyChallenge
+          };
+          
+          // Update user points in Firebase
+          updateUserPoints(user.id, earnedOrngPoints, gameResult)
+            .then(success => {
+              if (success) {
+                console.log('Updated points in Firebase successfully');
+              }
+            });
+        }
+      }
+    } else {
+      // If it's a loss and the user is logged in, record the loss in Firebase
+      if (isLoggedIn && user) {
+        // Create game result object for Firebase
+        const gameResult = {
+          isWin: false,
+          difficulty: difficulty,
+          timeSpent: 0,
+          isDailyChallenge: isDailyChallenge
+        };
+        
+        // Update user stats in Firebase (with 0 points)
+        updateUserPoints(user.id, 0, gameResult)
+          .then(success => {
+            if (success) {
+              console.log('Recorded game loss in Firebase successfully');
+            }
+          });
       }
     }
     
@@ -596,7 +663,7 @@ function App() {
     const newWinRate = Math.round((newGamesWon / newGamesPlayed) * 100);
     localStorage.setItem('winRate', newWinRate.toString());
     
-    // Get current ORNG points
+    // Get current points
     const currentOrngPoints = getPlayerPoints();
     
     // Handle duel-specific logic
@@ -615,6 +682,24 @@ function App() {
         // Update earned points to reflect duel winnings instead of regular points
         earnedOrngPoints = isWin ? duelInfo.betAmount : 0;
         setEarnedPoints(earnedOrngPoints);
+        
+        // If user is logged in, update Firebase with duel result
+        if (isLoggedIn && user && isWin) {
+          // Update user points in Firebase
+          updateUserPoints(user.id, duelInfo.betAmount, {
+            isWin: true,
+            difficulty: difficulty,
+            timeSpent: timeSpent,
+            isDuel: true,
+            opponent: duelInfo.opponent,
+            betAmount: duelInfo.betAmount
+          })
+            .then(success => {
+              if (success) {
+                console.log('Updated duel points in Firebase successfully');
+              }
+            });
+        }
       }
     }
     
@@ -713,32 +798,67 @@ function App() {
 
   // Card flipping logic
   useEffect(() => {
-    if (flippedCards.length === 2) {
-      const [first, second] = flippedCards;
-      setDisableClicks(true);
+    // Only proceed if we have exactly 2 cards flipped
+    if (flippedCards.length !== 2) return;
 
-      if (cards[first].matchId === cards[second].matchId) {
-        // Match found
+    const checkMatch = async () => {
+      const [firstIndex, secondIndex] = flippedCards;
+      const firstCard = cards[firstIndex];
+      const secondCard = cards[secondIndex];
+      
+      // Disable clicks while checking
+      setDisableClicks(true);
+      
+      // Allow cards to be fully visible
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Check if the cards match
+      if (firstCard && secondCard && firstCard.matchId === secondCard.matchId) {
+        // Match found!
         playSound('match');
-        setMatchedCards(prev => [...prev, first, second]);
-        setTimeout(() => {
-          setFlippedCards([]);
-          setDisableClicks(false);
-        }, 800);
+        setMatchedCards(prev => [...prev, firstIndex, secondIndex]);
+        
+        // Clear flipped cards after a short delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setFlippedCards([]);
       } else {
-        // No match, shake cards
-        setTimeout(() => {
-          playSound('noMatch');
-          setShakeCard([first, second]);
-          setTimeout(() => {
-            setShakeCard(null);
-          setFlippedCards([]);
-          setDisableClicks(false);
-          }, 500);
-        }, 800);
+        // No match
+        playSound('noMatch');
+        setShakeCard([firstIndex, secondIndex]);
+        
+        // Show the shake animation then hide cards
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setShakeCard(null);
+        setFlippedCards([]);
       }
-    }
+      
+      // Re-enable clicking
+      setDisableClicks(false);
+    };
+
+    checkMatch();
   }, [flippedCards, cards]);
+
+  const handleCardClick = index => {
+    // Check all conditions that would prevent a card flip
+    if (
+      disableClicks ||
+      flippedCards.includes(index) ||
+      matchedCards.includes(index) ||
+      gameOver ||
+      !isRunning ||
+      isPaused ||
+      flippedCards.length >= 2
+    ) {
+      return;
+    }
+
+    // Play flip sound
+    playSound('flip');
+    
+    // Add this card to flipped cards
+    setFlippedCards(prev => [...prev, index]);
+  };
 
   // Check for win condition
   useEffect(() => {
@@ -753,24 +873,6 @@ function App() {
       setCurrentStats(latestStats);
     }
   }, [matchedCards, cards]);
-
-  const handleCardClick = index => {
-    if (
-      disableClicks ||
-      flippedCards.includes(index) ||
-      matchedCards.includes(index) ||
-      gameOver ||
-      !isRunning ||
-      isPaused
-    )
-      return;
-
-    // Play flip sound
-    playSound('flip');
-    
-    // Flip card
-    setFlippedCards(prev => [...prev, index]);
-  };
 
   // Get the total number of pairs for display
   const totalPairs = Math.floor(cards.length / 2);
@@ -863,6 +965,40 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Simple Firebase connection monitoring
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState(true);
+  
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      // Simple ping to Firestore to check connection
+      const checkConnection = async () => {
+        try {
+          // Try to get user data as a connection test
+          await getUserData(user.id);
+          setIsFirebaseConnected(true);
+        } catch (error) {
+          console.log("Firebase connection error:", error);
+          setIsFirebaseConnected(false);
+        }
+      };
+      
+      // Check connection initially
+      checkConnection();
+      
+      // Set up interval to check connection
+      const intervalId = setInterval(checkConnection, 60000); // Check every minute
+      
+      return () => clearInterval(intervalId);
+    }
+  }, [isLoggedIn, user]);
+  
+  // User notification for connection issues (simplified)
+  useEffect(() => {
+    if (!isFirebaseConnected && isLoggedIn) {
+      console.warn("Firebase connection is down. Data will be saved locally.");
+    }
+  }, [isFirebaseConnected, isLoggedIn]);
+
   return (
     <ErrorBoundary FallbackComponent={AuthErrorFallback}>
       <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-800">
@@ -908,7 +1044,7 @@ function App() {
                 />
               </div>
             ) : (
-              <div className="h-screen flex flex-col py-2 px-2 sm:py-4 sm:px-4">
+              <div className="min-h-[calc(var(--vh,1vh)*100)] flex flex-col py-2 px-2 sm:py-4 sm:px-4">
                 <div className="flex-none mb-4">
                   <GameHeader 
                     timer={timer} 
@@ -929,7 +1065,7 @@ function App() {
                   />
                 </div>
 
-                <div className="flex-grow flex items-center justify-center overflow-y-auto py-2">
+                <div className="flex-grow flex items-center justify-center overflow-y-auto py-2" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
                   {isPaused && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/70 z-10 backdrop-blur-sm">
                       <motion.div 
@@ -954,20 +1090,27 @@ function App() {
                   )}
 
                   <motion.div 
-                    className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 w-full max-w-5xl mx-auto"
+                    className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3 md:gap-4 w-full max-w-5xl mx-auto"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
+                    style={{ 
+                      gridTemplateColumns: windowSize.width < 300 ? 'repeat(2, 1fr)' : 
+                                          windowSize.width < 640 ? 'repeat(3, 1fr)' : 
+                                          windowSize.width < 768 ? 'repeat(4, 1fr)' : 
+                                          'repeat(5, 1fr)',
+                      gridGap: windowSize.width < 400 ? '0.5rem' : windowSize.width < 640 ? '0.75rem' : '1rem'
+                    }}
                   >
                     {cards.map((card, index) => (
                       <Card
                         key={card.id}
                         card={card}
                         index={index}
-                        isFlipped={flippedCards.includes(card.id) || matchedCards.includes(card.id)}
-                        isMatched={matchedCards.includes(card.id)}
-                        isShaking={shakeCard === card.id}
-                        onClick={() => handleCardClick(card.id)}
+                        isFlipped={flippedCards.includes(index) || matchedCards.includes(index)}
+                        isMatched={matchedCards.includes(index)}
+                        isShaking={shakeCard && shakeCard.includes(index)}
+                        onClick={() => handleCardClick(index)}
                       />
                     ))}
                   </motion.div>

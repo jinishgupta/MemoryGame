@@ -3,21 +3,34 @@ import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
+  // Handle touch start - prevent default to avoid issues with scrolling
+  const handleTouchStart = (e) => {
+    if (!isFlipped) {
+      // Prevent scrolling when touching a card
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="flip-card-container w-full aspect-square">
-      <div 
+      <motion.div 
         className={`flip-card ${isFlipped ? 'flipped' : ''}`}
-        onClick={() => !isFlipped && onClick()}
+        onClick={() => !isFlipped && onClick(index)}
+        onTouchStart={handleTouchStart}
+        whileHover={!isFlipped ? { scale: 1.03 } : {}}
+        whileTap={!isFlipped ? { scale: 0.98 } : {}}
+        style={{ touchAction: isFlipped ? 'auto' : 'none' }}
       >
         <motion.div 
           className="flip-card-front"
           animate={{ 
             boxShadow: isMatched ? "0 0 10px 3px rgba(167, 243, 208, 0.7)" : "none",
-            x: isShaking ? [0, -5, 5, -5, 5, 0] : 0
+            x: isShaking ? [0, -5, 5, -5, 5, 0] : 0,
           }}
-          transition={{ x: isShaking ? { duration: 0.5 } : {} }}
-          whileHover={!isFlipped ? { scale: 1.03 } : {}}
-          whileTap={{ scale: 0.98 }}
+          transition={{ 
+            x: { duration: 0.5 },
+            boxShadow: { duration: 0.3 }
+          }}
         >
           <motion.div 
             className="text-center font-bold text-xl"
@@ -28,7 +41,7 @@ function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
             <span className="text-white">Up</span>
           </motion.div>
         </motion.div>
-        
+
         <motion.div 
           className="flip-card-back"
           animate={{ 
@@ -42,7 +55,7 @@ function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
               rotate: isMatched ? [0, 5, -5, 5, -5, 0] : 0
             }}
             transition={{ 
-              duration: 0.3,
+              scale: { duration: 0.3 },
               rotate: { duration: 0.5, repeat: isMatched ? 1 : 0 }
             }}
           >
@@ -53,7 +66,7 @@ function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
             />
           </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
     </div>
   );
 }

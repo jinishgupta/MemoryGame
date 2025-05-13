@@ -264,16 +264,19 @@ export const getPlayerRank = () => {
   };
 };
 
-// Get the total ORNG points of the current player
+// Get the current player's points
 export const getPlayerPoints = () => {
   const playerId = getCurrentPlayerId();
   const leaderboard = getLeaderboard();
+  
+  // Find the player in the leaderboard
   const player = leaderboard.find(p => p.id === playerId);
   
+  // Return the points (or 0 if player not found)
   return player ? player.points : 0;
 };
 
-// Get the top players from the leaderboard
+// Get the top N players from the leaderboard
 export const getTopPlayers = (count = 25) => {
   const leaderboard = getLeaderboard();
   return leaderboard.slice(0, count);
@@ -281,6 +284,8 @@ export const getTopPlayers = (count = 25) => {
 
 // Get the entire leaderboard
 export const getLeaderboard = () => {
+  // Note: This function returns the localStorage leaderboard
+  // For Firebase leaderboard, use the Firebase service functions
   return initializeLeaderboard();
 };
 

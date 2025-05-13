@@ -11,60 +11,137 @@ import {
   faQuestionCircle,
   faRedo,
   faSort,
-  faSearch
+  faSearch,
+  faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 import { 
-  getLeaderboard,
-  getTopPlayers,
-  getPlayerRank,
-  getCurrentPlayerName,
   POINTS
 } from '../utils/leaderboard';
+import { useBedrockPassport } from "@bedrock_org/passport";
+import { getLeaderboard as fetchFirebaseLeaderboard, getUserData } from '../firebase/firebaseService';
 
 const Leaderboard = ({ onBack }) => {
+  const { isLoggedIn, user } = useBedrockPassport();
   const [leaderboard, setLeaderboard] = useState([]);
   const [playerRank, setPlayerRank] = useState({ rank: 0, points: 0 });
-  const [playerName, setPlayerName] = useState('');
   const [loading, setLoading] = useState(true);
   const [showPointsInfo, setShowPointsInfo] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('rank'); // 'rank' or 'points'
+  const [sortBy, setSortBy] = useState('points'); // 'rank' or 'points'
 
-  // Load leaderboard data on component mount
+  // Load leaderboard data from Firebase on component mount
   useEffect(() => {
-    const loadLeaderboard = () => {
+    const loadLeaderboard = async () => {
       setLoading(true);
       
-      // Get top players
-      const topPlayers = getTopPlayers(25);
-      setLeaderboard(topPlayers);
-      
-      // Get player's rank
-      const rank = getPlayerRank();
-      setPlayerRank(rank);
-      
-      // Get player's name
-      const name = getCurrentPlayerName();
-      setPlayerName(name);
-      
-      setLoading(false);
+      try {
+        // Get top players from Firebase
+        const topPlayers = await fetchFirebaseLeaderboard(50);
+        
+        // Sort the leaderboard by points (descending)
+        const sortedPlayers = [...topPlayers].sort((a, b) => b.points - a.points);
+        
+        // Apply ranks to sorted players
+        const rankedPlayers = sortedPlayers.map((player, index) => ({
+          ...player,
+          rank: index + 1
+        }));
+        
+        setLeaderboard(rankedPlayers);
+        
+        // Get player's data if logged in
+        if (isLoggedIn && user) {
+          const userData = await getUserData(user.id);
+          
+          if (userData) {
+            // Find player's rank
+            const rank = rankedPlayers.findIndex(p => p.id === user.id) + 1;
+            
+            setPlayerRank({
+              rank: rank > 0 ? rank : rankedPlayers.length + 1,
+              points: userData.points || 0
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading leaderboard:', error);
+        
+        // Fallback to local leaderboard or show error
+        // Try to get data from localStorage as fallback
+        try {
+          const localLeaderboard = JSON.parse(localStorage.getItem('orngLeaderboard') || '[]');
+          if (localLeaderboard && localLeaderboard.length > 0) {
+            setLeaderboard(localLeaderboard.map((player, index) => ({
+              ...player,
+              rank: index + 1
+            })));
+            
+            // Show notification that we're using cached data
+            alert("Using locally cached leaderboard data. Some information may be out of date.");
+          }
+        } catch (localError) {
+          console.error('Error loading local leaderboard:', localError);
+        }
+      } finally {
+        setLoading(false);
+      }
     };
     
     loadLeaderboard();
-  }, []);
+  }, [isLoggedIn, user]);
 
   // Filter leaderboard by search term
   const filteredLeaderboard = leaderboard.filter(player => 
     player.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
+  // Sort filtered leaderboard based on sort preference
+  const sortedLeaderboard = [...filteredLeaderboard].sort((a, b) => {
+    if (sortBy === 'points') {
+      return b.points - a.points;
+    } else {
+      return a.rank - b.rank;
+    }
+  });
+  
   // Handle refresh leaderboard
-  const handleRefresh = () => {
-    const topPlayers = getTopPlayers(25);
-    setLeaderboard(topPlayers);
+  const handleRefresh = async () => {
+    setLoading(true);
     
-    const rank = getPlayerRank();
-    setPlayerRank(rank);
+    try {
+      // Get updated data from Firebase
+      const topPlayers = await fetchFirebaseLeaderboard(50);
+      
+      // Sort the leaderboard by points (descending)
+      const sortedPlayers = [...topPlayers].sort((a, b) => b.points - a.points);
+      
+      // Apply ranks to sorted players
+      const rankedPlayers = sortedPlayers.map((player, index) => ({
+        ...player,
+        rank: index + 1
+      }));
+      
+      setLeaderboard(rankedPlayers);
+      
+      // Update player's rank and points if logged in
+      if (isLoggedIn && user) {
+        const userData = await getUserData(user.id);
+        
+        if (userData) {
+          // Find player's rank
+          const rank = rankedPlayers.findIndex(p => p.id === user.id) + 1;
+          
+          setPlayerRank({
+            rank: rank > 0 ? rank : rankedPlayers.length + 1,
+            points: userData.points || 0
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing leaderboard:', error);
+    } finally {
+      setLoading(false);
+    }
   };
   
   // Get medal for top 3 players
@@ -83,14 +160,19 @@ const Leaderboard = ({ onBack }) => {
   
   // Get CSS class for player row
   const getRowClass = (playerId) => {
-    return playerId === localStorage.getItem('orngPlayerId')
+    return playerId === user?.id
       ? 'bg-indigo-900/50 border-l-4 border-indigo-500'
       : 'bg-slate-800/50 hover:bg-slate-700/50';
   };
 
   // Main function to get current player ID
   const getCurrentPlayerId = () => {
-    return localStorage.getItem('orngPlayerId');
+    return user?.id;
+  };
+
+  // Get current player's name
+  const getPlayerName = () => {
+    return user?.displayName || 'You';
   };
 
   return (
@@ -113,9 +195,14 @@ const Leaderboard = ({ onBack }) => {
             className="flex items-center text-white px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-600"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            disabled={loading}
           >
-            <FontAwesomeIcon icon={faRedo} className="mr-2" />
-            Refresh
+            {loading ? (
+              <FontAwesomeIcon icon={faSpinner} className="mr-2 animate-spin" />
+            ) : (
+              <FontAwesomeIcon icon={faRedo} className="mr-2" />
+            )}
+            {loading ? 'Loading...' : 'Refresh'}
           </motion.button>
         </div>
 
@@ -129,20 +216,22 @@ const Leaderboard = ({ onBack }) => {
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center mb-4 md:mb-0">
               <FontAwesomeIcon icon={faTrophy} className="text-yellow-300 text-4xl mr-4" />
-              <h1 className="text-3xl font-bold text-white">ORNG Points Leaderboard</h1>
+              <h1 className="text-3xl font-bold text-white">Global Leaderboard</h1>
             </div>
             
-            <div>
-              <div className="bg-black/30 px-5 py-3 rounded-lg flex items-center">
-                <FontAwesomeIcon icon={faCoins} className="text-yellow-300 mr-2" />
-                <span className="text-white font-medium mr-2">Your Points:</span>
-                <span className="text-2xl font-bold text-yellow-300">{playerRank.points}</span>
-                <div className="ml-3 pl-3 border-l border-gray-600">
-                  <span className="text-white font-medium mr-2">Rank:</span>
-                  <span className="text-xl font-bold text-white">#{playerRank.rank}</span>
+            {isLoggedIn && (
+              <div>
+                <div className="bg-black/30 px-5 py-3 rounded-lg flex items-center">
+                  <FontAwesomeIcon icon={faCoins} className="text-yellow-300 mr-2" />
+                  <span className="text-white font-medium mr-2">Your Points:</span>
+                  <span className="text-2xl font-bold text-yellow-300">{playerRank.points}</span>
+                  <div className="ml-3 pl-3 border-l border-gray-600">
+                    <span className="text-white font-medium mr-2">Rank:</span>
+                    <span className="text-xl font-bold text-white">#{playerRank.rank}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </motion.div>
         
@@ -156,7 +245,7 @@ const Leaderboard = ({ onBack }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <FontAwesomeIcon icon={faCoins} className="text-yellow-400 text-xl mr-3" />
-              <h2 className="text-xl font-bold text-white">ORNG Points System</h2>
+              <h2 className="text-xl font-bold text-white">Points System</h2>
             </div>
             
             <motion.button
@@ -181,7 +270,7 @@ const Leaderboard = ({ onBack }) => {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <p className="mb-2">Earn ORNG points by winning games:</p>
+                <p className="mb-2">Earn points by winning games:</p>
                 <ul className="space-y-2">
                   <li className="flex justify-between">
                     <span>• Easy difficulty win:</span>
@@ -245,17 +334,18 @@ const Leaderboard = ({ onBack }) => {
           <div className="grid grid-cols-12 gap-4 bg-slate-900 p-4 font-medium text-white border-b border-slate-700 sticky top-0 z-10">
             <div className="col-span-1 text-center">#</div>
             <div className="col-span-7">Player</div>
-            <div className="col-span-4 text-right">ORNG Points</div>
+            <div className="col-span-4 text-right">Points</div>
           </div>
           
           {/* Table body */}
           <div className="max-h-[560px] overflow-y-auto scrollable-container">
             {loading ? (
-              <div className="text-center py-8 text-slate-400">
-                Loading leaderboard...
+              <div className="text-center py-12 text-slate-400 flex flex-col items-center">
+                <FontAwesomeIcon icon={faSpinner} className="text-3xl mb-4 animate-spin text-orange-400" />
+                <p>Loading leaderboard...</p>
               </div>
-            ) : filteredLeaderboard.length > 0 ? (
-              filteredLeaderboard.map((player, index) => (
+            ) : sortedLeaderboard.length > 0 ? (
+              sortedLeaderboard.map((player, index) => (
                 <motion.div 
                   key={player.id}
                   className={`grid grid-cols-12 gap-4 p-4 border-b border-slate-700 text-white ${getRowClass(player.id)}`}
@@ -264,7 +354,7 @@ const Leaderboard = ({ onBack }) => {
                   transition={{ delay: 0.05 * index, duration: 0.3 }}
                 >
                   <div className="col-span-1 flex justify-center items-center">
-                    {getMedal(index) || <span className="text-slate-400">#{index + 1}</span>}
+                    {getMedal(player.rank - 1) || <span className="text-slate-400">#{player.rank}</span>}
                   </div>
                   
                   <div className="col-span-7 flex items-center">
@@ -293,15 +383,19 @@ const Leaderboard = ({ onBack }) => {
               <div className="text-center py-12 px-4">
                 <FontAwesomeIcon icon={faTrophy} className="text-yellow-500 text-5xl mb-4 opacity-50" />
                 <h3 className="text-xl font-bold text-white mb-2">No players on the leaderboard yet</h3>
-                <p className="text-slate-400 mb-4">Win games to earn ORNG points and be the first to appear here!</p>
-                <p className="text-sm text-slate-500">The leaderboard shows real players only.</p>
+                <p className="text-slate-400 mb-4">Win games to earn points and be the first to appear here!</p>
+                <p className="text-sm text-slate-500 mt-4">
+                  {leaderboard.length === 0 ? 
+                    "If you're seeing this and have played games, there might be a connection issue with our database." : 
+                    ""}
+                </p>
               </div>
             )}
           </div>
         </motion.div>
         
-        {/* Player's rank if not in top 25 */}
-        {playerRank.rank > 25 && (
+        {/* Player's rank if not in top displayed results and is logged in */}
+        {isLoggedIn && playerRank.rank > 25 && !sortedLeaderboard.some(p => p.id === getCurrentPlayerId()) && (
           <motion.div 
             className="mt-6 bg-indigo-900/50 p-4 rounded-lg border border-indigo-700 flex items-center justify-between"
             initial={{ opacity: 0, y: 20 }}
@@ -312,7 +406,7 @@ const Leaderboard = ({ onBack }) => {
               <FontAwesomeIcon icon={faUserCircle} className="text-orange-400 mr-3 text-xl" />
               <div>
                 <p className="text-white">Your position</p>
-                <p className="text-xl font-bold text-white">{playerName} <span className="text-orange-300">(#{playerRank.rank})</span></p>
+                <p className="text-xl font-bold text-white">{getPlayerName()} <span className="text-orange-300">(#{playerRank.rank})</span></p>
               </div>
             </div>
             
