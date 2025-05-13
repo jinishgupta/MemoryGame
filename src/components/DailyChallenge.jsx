@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrophy, faLock, faUnlock, faStar, faCalendarAlt, faRedo, faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-// Temporarily disable Orange ID integration
-// import { useBedrockPassport } from "@bedrock_org/passport";
+// Enable Orange ID integration
+import { useBedrockPassport } from "@bedrock_org/passport";
 
 const DailyChallenge = ({ onStart, isCompleted: propIsCompleted }) => {
-  // Temporarily disable Orange ID authentication
-  // const { user } = useBedrockPassport();
-  const user = { displayName: "Local User" }; // Mock user for local development
-  
+  // Enable Orange ID authentication
+  const { user } = useBedrockPassport();
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isCompleted, setIsCompleted] = useState(propIsCompleted || false);
   const [isInProgress, setIsInProgress] = useState(false);

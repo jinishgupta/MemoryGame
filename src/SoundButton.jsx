@@ -1,16 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faVolumeHigh, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
-import { toggleSound, isSoundEnabled, playSound } from './sounds.js';
+import { toggleSound, isSoundEnabled, playSound, resumeAudio } from './sounds.js';
 
 function SoundButton() {
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   
+  // Ensure state is in sync with localStorage
+  useEffect(() => {
+    setSoundOn(isSoundEnabled());
+  }, []);
+  
   const handleToggleSound = () => {
+    // Resume audio context first to ensure sound plays
+    resumeAudio();
+    
     const newState = toggleSound();
     setSoundOn(newState);
     if (newState) {
-      playSound('click');
+      // Short delay to ensure context is resumed
+      setTimeout(() => playSound('click'), 10);
     }
   };
   

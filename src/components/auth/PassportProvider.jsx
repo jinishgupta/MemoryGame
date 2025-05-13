@@ -22,6 +22,7 @@ console.warn = function(msg, ...args) {
 
 const PassportProvider = ({ children }) => {
   const [isReady, setIsReady] = useState(false);
+  const [providerInstance, setProviderInstance] = useState(null);
   
   useEffect(() => {
     // Set ready state to true to prevent multiple initializations
@@ -32,9 +33,15 @@ const PassportProvider = ({ children }) => {
     }
     
     return () => {
-      // Cleanup if needed
+      // Cleanup event listeners and subscriptions to prevent memory leaks
+      if (providerInstance && typeof providerInstance.removeAllListeners === 'function') {
+        providerInstance.removeAllListeners();
+      }
+      
+      // Reset global initialization flag on unmount to allow re-initialization if needed
+      walletConnectInitialized = false;
     };
-  }, []);
+  }, [isReady, providerInstance]);
   
   // Handle errors gracefully
   const handleError = (error) => {
@@ -46,6 +53,12 @@ const PassportProvider = ({ children }) => {
     }
   };
   
+  // Save provider instance on initialization
+  const handleProviderInit = (provider) => {
+    walletConnectInitialized = true;
+    setProviderInstance(provider);
+  };
+  
   return isReady ? (
     <BedrockPassportProvider
       baseUrl="https://api.bedrockpassport.com"
@@ -55,9 +68,7 @@ const PassportProvider = ({ children }) => {
       passportOptions={{
         autoConnect: !walletConnectInitialized, // Only auto-connect if not initialized before
         cacheProvider: true,
-        onProviderInit: () => {
-          walletConnectInitialized = true; // Mark as initialized
-        },
+        onProviderInit: handleProviderInit,
         onError: handleError
       }}
     >

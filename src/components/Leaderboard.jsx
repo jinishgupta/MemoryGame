@@ -17,6 +17,8 @@ import {
 import { 
   POINTS
 } from '../utils/leaderboard';
+
+// Enable Orange ID import
 import { useBedrockPassport } from "@bedrock_org/passport";
 import { getLeaderboard as fetchFirebaseLeaderboard, getUserData } from '../firebase/firebaseService';
 

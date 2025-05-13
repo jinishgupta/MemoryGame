@@ -1,24 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
-  // Add debugging
-  useEffect(() => {
-    if (isFlipped) {
-      console.log(`Card ${index} is flipped, matchId: ${card.matchId}`);
-    }
-  }, [isFlipped, index, card]);
-  
-  // Handle touch start - removed preventDefault to avoid passive listener warning
-  const handleTouchStart = (e) => {
-    // We don't need to call preventDefault here as it causes warnings
-    // with passive event listeners in modern browsers
-  };
-
-  // Debug click handling
   const handleClick = () => {
-    console.log(`Card ${index} clicked. Current state: ${isFlipped ? 'flipped' : 'not flipped'}`);
     if (!isFlipped) {
       onClick(index);
     }
@@ -26,19 +11,41 @@ function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
 
   return (
     <div className="flip-card-container w-full aspect-square">
-      <motion.div 
+      <div 
         className={`flip-card ${isFlipped ? 'flipped' : ''}`}
         onClick={handleClick}
-        onTouchStart={handleTouchStart}
-        whileHover={!isFlipped ? { scale: 1.03 } : {}}
-        whileTap={!isFlipped ? { scale: 0.98 } : {}}
-        style={{ touchAction: 'manipulation' }} // Changed to 'manipulation' for better touch handling
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          transition: 'transform 0.6s',
+          transformStyle: 'preserve-3d',
+          WebkitTransformStyle: 'preserve-3d',
+          transform: isFlipped ? 'rotateY(180deg)' : '',
+          WebkitTransform: isFlipped ? 'rotateY(180deg)' : ''
+        }}
       >
         <motion.div 
           className="flip-card-front"
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '0.75rem',
+            borderWidth: '2px',
+            borderStyle: 'solid',
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+            borderColor: '#475569',
+            zIndex: 2
+          }}
           animate={{ 
             boxShadow: isMatched ? "0 0 10px 3px rgba(167, 243, 208, 0.7)" : "none",
-            x: isShaking ? [0, -5, 5, -5, 5, 0] : 0,
+            x: isShaking ? [0, -5, 5, -5, 5, 0] : 0
           }}
           transition={{ 
             x: { duration: 0.5 },
@@ -57,6 +64,24 @@ function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
 
         <motion.div 
           className="flip-card-back"
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '0.75rem',
+            borderWidth: '2px',
+            borderStyle: 'solid',
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
+            borderColor: '#4338ca',
+            transform: 'rotateY(180deg)',
+            WebkitTransform: 'rotateY(180deg)',
+            zIndex: 1
+          }}
           animate={{ 
             boxShadow: isMatched ? "0 0 15px 5px rgba(167, 243, 208, 0.7)" : "none"
           }}
@@ -79,7 +104,7 @@ function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
             />
           </motion.div>
         </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 }

@@ -63,12 +63,10 @@
   }
 }
 
-/* Enhanced card flip animation with better visuals */
+/* =============== SIMPLIFIED CARD FLIPPING =============== */
 .flip-card-container {
   perspective: 1000px;
-  transform-style: preserve-3d;
-  width: 100%;
-  height: 100%;
+  cursor: pointer;
 }
 
 .flip-card {
@@ -77,13 +75,12 @@
   height: 100%;
   transition: transform 0.6s;
   transform-style: preserve-3d;
-  cursor: pointer;
-  -webkit-transform-style: preserve-3d; /* Add webkit prefix for better compatibility */
+  -webkit-transform-style: preserve-3d;
 }
 
 .flip-card.flipped {
   transform: rotateY(180deg);
-  -webkit-transform: rotateY(180deg); /* Add webkit prefix for better compatibility */
+  -webkit-transform: rotateY(180deg);
 }
 
 .flip-card-front,
@@ -91,34 +88,31 @@
   position: absolute;
   width: 100%;
   height: 100%;
-  -webkit-backface-visibility: hidden; /* Add webkit prefix */
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 0.75rem;
-  border: 2px solid;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
+  border-width: 2px;
+  border-style: solid;
 }
 
 .flip-card-front {
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-color: #475569;
-  z-index: 1;
-  -webkit-transform: rotateY(0deg); /* Add for compatibility */
-  transform: rotateY(0deg);
+  z-index: 2;
 }
 
 .flip-card-back {
   background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
   border-color: #4338ca;
   transform: rotateY(180deg);
-  -webkit-transform: rotateY(180deg); /* Add webkit prefix for better compatibility */
-  z-index: 0;
+  -webkit-transform: rotateY(180deg);
+  z-index: 1;
 }
 
-/* Animation utilities */
+/* Animation utilities - Keep these */
 .animate-bounce-sm {
   animation: bounce-sm 1s infinite;
 }
@@ -177,19 +171,10 @@
   }
 }
 
-/* Custom CSS */
-
-/* Card flipping styles */
+/* Card flipping additional utilities */
 .preserve-3d {
   transform-style: preserve-3d;
-}
-
-.backface-hidden {
-  backface-visibility: hidden;
-}
-
-.transform-style-3d {
-  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 
 /* Make fixed position modals scrollable on mobile */
@@ -216,4 +201,21 @@
   min-height: 100vh;
   /* Fallback for browsers that don't support custom properties */
   min-height: calc(var(--vh, 1vh) * 100);
+}
+
+/* Add shake animation for mismatched cards */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.shake-animation {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Add glow effect for matched cards */
+.matched-card {
+  box-shadow: 0 0 15px 5px rgba(167, 243, 208, 0.7) !important;
+  transition: box-shadow 0.3s ease;
 }

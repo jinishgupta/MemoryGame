@@ -19,10 +19,13 @@ import {
   faCoins,
   faEnvelope
 } from "@fortawesome/free-solid-svg-icons";
+
+// Enable Orange ID import
 import { useBedrockPassport } from "@bedrock_org/passport";
 
 const ProfilePage = ({ onBack }) => {
   const { user } = useBedrockPassport();
+  
   // State for user stats
   const [stats, setStats] = useState({
     gamesPlayed: 0,

@@ -16,6 +16,7 @@ import {
   faCoins,
   faList
 } from '@fortawesome/free-solid-svg-icons';
+// Enable Orange ID integration
 import { Profile } from './auth/index.jsx';
 import StartScreen from '../StartScreen';
 import DailyChallenge from './DailyChallenge';

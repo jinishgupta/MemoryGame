@@ -7,7 +7,7 @@ import GameHeader from "./GameHeader.jsx";
 import Stats from "./Stats.jsx";
 import ProfilePage from "./components/ProfilePage.jsx";
 import Leaderboard from "./components/Leaderboard.jsx";
-import { playSound, toggleSound, isSoundEnabled } from './sounds.js';
+import { playSound, toggleSound, isSoundEnabled, resumeAudio } from './sounds.js';
 import { 
   calculatePoints, 
   addPointsToPlayer, 
@@ -23,7 +23,7 @@ import {
   faPython, faNode, faDocker, faPhp, faVuejs,
   faAngular, faBootstrap, faUbuntu, faApple
 } from "@fortawesome/free-brands-svg-icons";
-// Enabling Orange ID integration
+// Enable Orange ID integration
 import { useBedrockPassport } from "@bedrock_org/passport";
 import { Login } from "./components/auth/index.jsx";
 import HomePage from "./components/HomePage";
@@ -47,55 +47,53 @@ function AuthErrorFallback({ error }) {
   );
 }
 
-function App() {
-  // Enable Orange ID integration
-  const { isLoggedIn, user } = useBedrockPassport();
-  // const isLoggedIn = true; // Remove this line as we're using real authentication now
-  
-  // Track logged-in users and save to Firebase
-  useEffect(() => {
-    if (isLoggedIn && user) {
-      // Save user to Firebase
-      saveUserToFirebase(user).then(success => {
-        if (success) {
-          console.log('User saved to Firebase successfully');
-          
-          // Load user data from Firebase
-          getUserData(user.id).then(userData => {
-            if (userData) {
-              console.log('User data retrieved from Firebase');
-              
-              // Sync local stats with Firebase
-              const localStats = {
-                gamesPlayed: parseInt(localStorage.getItem('gamesPlayed') || '0'),
-                gamesWon: parseInt(localStorage.getItem('gamesWon') || '0'),
-                bestTime: parseInt(localStorage.getItem('bestTime') || '0') || null
-              };
-              
-              syncLocalStatsWithFirebase(user.id, localStats);
-            }
-          });
-        }
-      });
-      
-      // Also save to localStorage for backward compatibility
-      const allUsers = JSON.parse(localStorage.getItem('allLoggedInUsers') || '[]');
-      
-      // Check if user is already in the list
-      if (!allUsers.some(u => u.id === user.id)) {
-        // Add user to list
-        allUsers.push({
-          id: user.id,
-          name: user.displayName || 'Anonymous User',
-          email: user.email || '',
-          lastLogin: new Date().toISOString()
-        });
-        
-        // Store updated list
-        localStorage.setItem('allLoggedInUsers', JSON.stringify(allUsers));
-      }
+// Simple login component
+function SimpleLogin({ onLogin }) {
+  const [username, setUsername] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (username.trim()) {
+      // Create a simple user object
+      const user = {
+        id: 'user-' + Date.now(),
+        displayName: username,
+        email: username + '@example.com'
+      };
+      onLogin(user);
     }
-  }, [isLoggedIn, user]);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-800 flex flex-col items-center justify-center p-4">
+      <h1 className="text-4xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500 mb-8">
+        MatchUp Memory Game
+      </h1>
+      <form onSubmit={handleSubmit} className="w-full max-w-md bg-slate-800 rounded-lg p-8 shadow-xl">
+        <label className="block text-white text-lg mb-2">Enter Your Name:</label>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="w-full bg-slate-700 text-white p-3 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+          placeholder="Your Name"
+          required
+        />
+        <button 
+          type="submit"
+          className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 px-4 rounded"
+        >
+          Start Playing
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function App() {
+  // Use Orange ID authentication
+  const { isLoggedIn, user, signOut } = useBedrockPassport();
+  const [authLoading, setAuthLoading] = useState(true);
   
   // All available icons for cards
   const allIcons = [
@@ -149,9 +147,6 @@ function App() {
   const [isDuel, setIsDuel] = useState(false);
   const [duelInfo, setDuelInfo] = useState(null);
   const [duelResult, setDuelResult] = useState(null);
-  
-  // Add this right after the isLoggedIn destructuring
-  const [authLoading, setAuthLoading] = useState(true);
   
   // Load all stats from localStorage
   useEffect(() => {
@@ -1012,6 +1007,60 @@ function App() {
       console.warn("Firebase connection is down. Data will be saved locally.");
     }
   }, [isFirebaseConnected, isLoggedIn]);
+
+  // Track logged-in users and save to Firebase
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      // Save user to Firebase
+      saveUserToFirebase(user).then(success => {
+        if (success) {
+          // Load user data from Firebase
+          getUserData(user.id).then(userData => {
+            if (userData) {
+              // Sync local stats with Firebase
+              const localStats = {
+                gamesPlayed: parseInt(localStorage.getItem('gamesPlayed') || '0'),
+                gamesWon: parseInt(localStorage.getItem('gamesWon') || '0'),
+                bestTime: parseInt(localStorage.getItem('bestTime') || '0') || null
+              };
+              
+              syncLocalStatsWithFirebase(user.id, localStats);
+            }
+          });
+        }
+      });
+    }
+  }, [isLoggedIn, user]);
+
+  // Initialize game state
+  useEffect(() => {
+    // Resume audio context on first user interaction
+    resumeAudio();
+    
+    // ... existing code ...
+  }, []);
+  
+  // Handle user interactions that might need audio unblocking
+  const handleUserInteraction = () => {
+    // Resume audio context if it was suspended (needed for Safari and Chrome)
+    resumeAudio();
+  };
+  
+  // Add the interaction handler to the main container
+  useEffect(() => {
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) {
+      gameContainer.addEventListener('click', handleUserInteraction);
+      gameContainer.addEventListener('touchstart', handleUserInteraction);
+    }
+    
+    return () => {
+      if (gameContainer) {
+        gameContainer.removeEventListener('click', handleUserInteraction);
+        gameContainer.removeEventListener('touchstart', handleUserInteraction);
+      }
+    };
+  }, []);
 
   return (
     <ErrorBoundary FallbackComponent={AuthErrorFallback}>
