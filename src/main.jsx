@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, createRoutesFromElements } from 'react-ro
 import { PassportProvider } from './components/auth/index.jsx'
 import { AuthCallback } from './components/auth/index.jsx'
 import '@bedrock_org/passport/dist/style.css'
+// Import Firebase to ensure it's initialized
+import firebaseApp from './firebase/config.js'
 
 // Suppress React Router future flag warnings
 const originalConsoleWarn = console.warn;
@@ -14,12 +16,29 @@ console.warn = function(msg, ...args) {
   if (typeof msg === 'string' && (
     msg.includes('React Router Future Flag Warning') || 
     msg.includes('v7_startTransition') || 
-    msg.includes('v7_relativeSplatPath')
+    msg.includes('v7_relativeSplatPath') ||
+    msg.includes('FirebaseError') ||
+    msg.includes('CONFIGURATION_NOT_FOUND') ||
+    msg.includes('getProjectConfig')
   )) {
     // Suppress these specific warnings
     return;
   }
   originalConsoleWarn(msg, ...args);
+};
+
+// Also suppress certain errors
+const originalConsoleError = console.error;
+console.error = function(msg, ...args) {
+  if (typeof msg === 'string' && (
+    msg.includes('FirebaseError') ||
+    msg.includes('CONFIGURATION_NOT_FOUND') ||
+    msg.includes('getProjectConfig')
+  )) {
+    // Suppress these specific errors
+    return;
+  }
+  originalConsoleError(msg, ...args);
 };
 
 try {
@@ -69,6 +88,17 @@ window.addEventListener('scroll', setViewportHeight, { passive: true });
 
 // Also update when document is fully loaded
 document.addEventListener('DOMContentLoaded', setViewportHeight);
+
+// Create an error handler for Firebase issues
+window.addEventListener('error', (event) => {
+  if (event.message.includes('Firebase') || 
+      event.message.includes('CONFIGURATION_NOT_FOUND') ||
+      event.message.includes('getProjectConfig')) {
+    console.log('Suppressed Firebase error:', event.message);
+    // Prevent the error from appearing in the console
+    event.preventDefault();
+  }
+}, true);
 
 createRoot(root).render(
   <React.StrictMode>

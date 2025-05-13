@@ -302,15 +302,29 @@ function App() {
   }, []);
 
   const generateShuffledCards = (pairCount) => {
+    console.log(`Generating ${pairCount} card pairs`);
+    
     // Select the specified number of icons
     const selectedIcons = allIcons.slice(0, pairCount);
+    console.log(`Selected ${selectedIcons.length} icons`);
+    
     let id = 0;
     // Create pairs
     const duplicatedIcons = [...selectedIcons, ...selectedIcons];
+    
     // Return shuffled card objects
-    return duplicatedIcons
-      .map(icon => ({ icon, id: id++, matchId: icon.iconName }))
+    const cards = duplicatedIcons
+      .map(icon => {
+        // Make sure icon has a valid iconName property
+        const matchId = icon && icon.iconName ? icon.iconName : `card-${id % pairCount}`;
+        const card = { icon, id: id++, matchId };
+        console.log(`Created card with id: ${card.id}, matchId: ${card.matchId}`);
+        return card;
+      })
       .sort(() => Math.random() - 0.5);
+    
+    console.log(`Generated ${cards.length} cards total`);
+    return cards;
   };
 
   const startGame = (challengeInfo = null) => {

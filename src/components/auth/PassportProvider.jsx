@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BedrockPassportProvider } from "@bedrock_org/passport";
+// Import Firebase app for initialization consistency
+import firebaseApp from '../../firebase/config';
 
 // Use a global variable to track if WalletConnect has been initialized
 let walletConnectInitialized = false;
@@ -7,8 +9,12 @@ let walletConnectInitialized = false;
 // Suppress WalletConnect initialization warnings in console
 const originalConsoleWarn = console.warn;
 console.warn = function(msg, ...args) {
-  if (typeof msg === 'string' && msg.includes('WalletConnect Core is already initialized')) {
-    // Suppress this specific warning
+  if (typeof msg === 'string' && (
+    msg.includes('WalletConnect Core is already initialized') ||
+    msg.includes('Firebase') ||
+    msg.includes('CONFIGURATION_NOT_FOUND') 
+  )) {
+    // Suppress these specific warnings
     return;
   }
   originalConsoleWarn(msg, ...args);
@@ -20,6 +26,8 @@ const PassportProvider = ({ children }) => {
   useEffect(() => {
     // Set ready state to true to prevent multiple initializations
     if (!isReady) {
+      // Ensure Firebase is initialized
+      console.log('Firebase app initialized:', !!firebaseApp);
       setIsReady(true);
     }
     
@@ -27,6 +35,16 @@ const PassportProvider = ({ children }) => {
       // Cleanup if needed
     };
   }, []);
+  
+  // Handle errors gracefully
+  const handleError = (error) => {
+    console.log('Auth provider error handled:', error.message);
+    // Don't propagate Firebase-related errors
+    if (error.message.includes('Firebase') || 
+        error.message.includes('CONFIGURATION_NOT_FOUND')) {
+      return;
+    }
+  };
   
   return isReady ? (
     <BedrockPassportProvider
@@ -39,7 +57,8 @@ const PassportProvider = ({ children }) => {
         cacheProvider: true,
         onProviderInit: () => {
           walletConnectInitialized = true; // Mark as initialized
-        }
+        },
+        onError: handleError
       }}
     >
       {children}

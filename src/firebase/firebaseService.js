@@ -82,19 +82,25 @@ export const updateUserPoints = async (userId, points, gameResult) => {
     
     const userRef = doc(db, 'users', userId);
     
-    // Create a game record
+    // Create a game record with a current date string instead of serverTimestamp
     const gameRecord = {
-      timestamp: serverTimestamp(),
+      timestamp: new Date().toISOString(), // Use ISO string instead of serverTimestamp
       pointsEarned: points,
       result: gameResult.isWin ? 'win' : 'loss',
       difficulty: gameResult.difficulty,
       timeSpent: gameResult.timeSpent || 0
     };
     
+    // First update points and game counters
     await updateDoc(userRef, {
       points: increment(points),
       gamesPlayed: increment(1),
       gamesWon: gameResult.isWin ? increment(1) : increment(0),
+      lastGamePlayed: serverTimestamp() // Add this field to track when last game was played
+    });
+    
+    // Then add to game history in a separate update
+    await updateDoc(userRef, {
       gameHistory: arrayUnion(gameRecord)
     });
     

@@ -67,6 +67,8 @@
 .flip-card-container {
   perspective: 1000px;
   transform-style: preserve-3d;
+  width: 100%;
+  height: 100%;
 }
 
 .flip-card {
@@ -76,10 +78,12 @@
   transition: transform 0.6s;
   transform-style: preserve-3d;
   cursor: pointer;
+  -webkit-transform-style: preserve-3d; /* Add webkit prefix for better compatibility */
 }
 
 .flip-card.flipped {
   transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg); /* Add webkit prefix for better compatibility */
 }
 
 .flip-card-front,
@@ -87,6 +91,7 @@
   position: absolute;
   width: 100%;
   height: 100%;
+  -webkit-backface-visibility: hidden; /* Add webkit prefix */
   backface-visibility: hidden;
   display: flex;
   align-items: center;
@@ -101,12 +106,16 @@
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-color: #475569;
   z-index: 1;
+  -webkit-transform: rotateY(0deg); /* Add for compatibility */
+  transform: rotateY(0deg);
 }
 
 .flip-card-back {
   background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
   border-color: #4338ca;
   transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg); /* Add webkit prefix for better compatibility */
+  z-index: 0;
 }
 
 /* Animation utilities */

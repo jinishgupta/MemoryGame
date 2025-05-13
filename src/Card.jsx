@@ -1,13 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from "framer-motion";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
-  // Handle touch start - prevent default to avoid issues with scrolling
+  // Add debugging
+  useEffect(() => {
+    if (isFlipped) {
+      console.log(`Card ${index} is flipped, matchId: ${card.matchId}`);
+    }
+  }, [isFlipped, index, card]);
+  
+  // Handle touch start - removed preventDefault to avoid passive listener warning
   const handleTouchStart = (e) => {
+    // We don't need to call preventDefault here as it causes warnings
+    // with passive event listeners in modern browsers
+  };
+
+  // Debug click handling
+  const handleClick = () => {
+    console.log(`Card ${index} clicked. Current state: ${isFlipped ? 'flipped' : 'not flipped'}`);
     if (!isFlipped) {
-      // Prevent scrolling when touching a card
-      e.preventDefault();
+      onClick(index);
     }
   };
 
@@ -15,11 +28,11 @@ function Card({ card, index, isFlipped, isMatched, isShaking, onClick }) {
     <div className="flip-card-container w-full aspect-square">
       <motion.div 
         className={`flip-card ${isFlipped ? 'flipped' : ''}`}
-        onClick={() => !isFlipped && onClick(index)}
+        onClick={handleClick}
         onTouchStart={handleTouchStart}
         whileHover={!isFlipped ? { scale: 1.03 } : {}}
         whileTap={!isFlipped ? { scale: 0.98 } : {}}
-        style={{ touchAction: isFlipped ? 'auto' : 'none' }}
+        style={{ touchAction: 'manipulation' }} // Changed to 'manipulation' for better touch handling
       >
         <motion.div 
           className="flip-card-front"

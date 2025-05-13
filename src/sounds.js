@@ -1,12 +1,12 @@
 // Sound effects URLs (using free sounds from the web)
 const SOUNDS = {
-  flip: 'https://assets.mixkit.co/active_storage/sfx/2073/2073-preview.mp3',
-  match: 'https://assets.mixkit.co/active_storage/sfx/1689/1689-preview.mp3',
-  noMatch: 'https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3',
-  win: 'https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3',
-  lose: 'https://assets.mixkit.co/active_storage/sfx/981/981-preview.mp3',
-  start: 'https://assets.mixkit.co/active_storage/sfx/2020/2020-preview.mp3',
-  click: 'https://assets.mixkit.co/active_storage/sfx/2705/2705-preview.mp3'
+  flip: '/sounds/card-flip.mp3', 
+  match: '/sounds/match-success.mp3',
+  noMatch: '/sounds/match-fail.mp3',
+  win: '/sounds/win.mp3',
+  lose: '/sounds/lose.mp3',
+  start: '/sounds/game-start.mp3',
+  click: '/sounds/click.mp3'
 };
 
 // Preload sounds for better performance
@@ -18,31 +18,37 @@ Object.entries(SOUNDS).forEach(([key, url]) => {
   audioElements[key].volume = key === 'win' ? 0.5 : 0.2;
 });
 
-// Sound control - defaults to on but respects user preference
-let soundEnabled = localStorage.getItem('matchup-sound-enabled') !== 'false';
+// Sound toggle state
+let soundEnabled = localStorage.getItem('soundEnabled') === 'false' ? false : true;
 
-// Sound functions
-export const playSound = (sound) => {
-  if (!soundEnabled || !audioElements[sound]) return;
+// Play sound function
+export const playSound = (soundName) => {
+  if (!soundEnabled || !SOUNDS[soundName]) return;
   
-  // Stop the sound if it's currently playing
-  audioElements[sound].pause();
-  audioElements[sound].currentTime = 0;
-  
-  // Play the sound
-  audioElements[sound].play().catch(e => {
-    // Suppress errors - browser might block autoplay
-    console.log('Sound playback was blocked');
-  });
+  try {
+    const audio = audioElements[soundName];
+    if (audio) {
+      audio.currentTime = 0; // Rewind to start
+      audio.play().catch(err => {
+        console.log(`Error playing sound: ${err.message}`);
+      });
+    }
+  } catch (error) {
+    console.error(`Failed to play sound ${soundName}:`, error);
+  }
 };
 
+// Toggle sound on/off
 export const toggleSound = () => {
   soundEnabled = !soundEnabled;
-  localStorage.setItem('matchup-sound-enabled', soundEnabled);
+  localStorage.setItem('soundEnabled', soundEnabled);
   return soundEnabled;
 };
 
-export const isSoundEnabled = () => soundEnabled;
+// Check if sound is enabled
+export const isSoundEnabled = () => {
+  return soundEnabled;
+};
 
 export default {
   playSound,

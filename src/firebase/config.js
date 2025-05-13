@@ -1,5 +1,5 @@
 // Firebase configuration
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
@@ -15,10 +15,24 @@ const firebaseConfig = {
   measurementId: "G-DCVV8XYNHQ"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Check if Firebase is already initialized
+let app;
+try {
+  // Get existing apps
+  if (getApps().length === 0) {
+    // Initialize Firebase if no apps exist
+    app = initializeApp(firebaseConfig);
+    console.log("Firebase initialized successfully");
+  } else {
+    // Use the first existing app
+    app = getApps()[0];
+    console.log("Using existing Firebase app");
+  }
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+}
 
-// Initialize services
+// Initialize services safely
 const db = getFirestore(app);
 const auth = getAuth(app);
 
