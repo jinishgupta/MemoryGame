@@ -15,7 +15,9 @@ function GameOver({
   isDuel,
   duelInfo,
   duelResult,
-  earnedPoints 
+  earnedPoints,
+  onOpenLeaderboard,
+  onOpenProfile
 }) {
   // Create state to store the latest stats
   const [localStats, setLocalStats] = useState({
@@ -284,6 +286,19 @@ function GameOver({
               {dailyChallengeCompleted || (isDuel && isWin) ? "Awesome!" : "Home"}
             </motion.button>
           </div>
+          
+          {/* Leaderboard button */}
+          {onOpenLeaderboard && (
+            <motion.button
+              className="w-full mt-3 py-3 px-5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg flex items-center justify-center"
+              onClick={onOpenLeaderboard}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <FontAwesomeIcon icon={faTrophy} className="mr-2" />
+              View Leaderboard
+            </motion.button>
+          )}
         </div>
       </motion.div>
     </motion.div>

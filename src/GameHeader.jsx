@@ -20,7 +20,8 @@ const GameHeader = ({
   isDuel,
   duelInfo, 
   orngPoints,
-  username
+  username,
+  showLeaderboardButton
 }) => {
   // Get initial timer value based on difficulty
   const getMaxTime = () => {
@@ -141,7 +142,7 @@ const GameHeader = ({
             </motion.button>
           )}
           
-          {onLeaderboard && (
+          {(onLeaderboard || showLeaderboardButton) && (
             <motion.button 
               className="bg-orange-600 hover:bg-orange-500 text-white p-1.5 rounded"
               whileTap={{ scale: 0.9 }}

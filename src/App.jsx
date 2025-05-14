@@ -1110,17 +1110,17 @@ function App() {
               <div className="min-h-[calc(var(--vh,1vh)*100)] flex flex-col py-2 px-2 sm:py-4 sm:px-4">
                 <div className="flex-none mb-4">
                   <GameHeader 
-                    timer={timer} 
-                    pairs={matchedPairs} 
-                    totalPairs={totalPairs}
+                    timer={timer}
                     difficulty={difficulty}
+                    onPauseToggle={handlePauseToggle}
+                    isPaused={isPaused}
+                    isDailyChallenge={isDailyChallenge}
+                    showLeaderboardButton={true}
+                    onLeaderboard={handleOpenLeaderboard}
+                    pairs={matchedCards.length / 2}
+                    totalPairs={cards.length / 2}
                     onRestart={restartGame}
                     onHome={returnToHome}
-                    isPaused={isPaused}
-                    onPauseToggle={handlePauseToggle}
-                    onProfile={handleOpenProfile}
-                    onLeaderboard={handleOpenLeaderboard}
-                    isDailyChallenge={isDailyChallenge}
                     isDuel={isDuel}
                     duelInfo={duelInfo}
                     orngPoints={currentStats.orngPoints}
@@ -1186,16 +1186,20 @@ function App() {
               {gameOver && (
                 <GameOver 
                   result={result} 
-                  matchedPairs={matchedPairs}
-                  totalPairs={totalPairs}
+                  timeSpent={60 - timer}
                   onRestart={restartGame}
                   onHome={returnToHome}
-                  currentStats={currentStats}
+                  earnedPoints={earnedPoints}
+                  difficulty={difficulty}
                   isDailyChallenge={isDailyChallenge}
+                  onOpenLeaderboard={handleOpenLeaderboard}
+                  onOpenProfile={handleOpenProfile}
                   isDuel={isDuel}
                   duelInfo={duelInfo}
                   duelResult={duelResult}
-                  earnedPoints={earnedPoints}
+                  matchedPairs={matchedCards.length / 2}
+                  totalPairs={cards.length / 2}
+                  currentStats={currentStats}
                 />
               )}
             </AnimatePresence>
