@@ -7,7 +7,7 @@ import {
   getDocs, 
   query, 
   orderBy, 
-  limit, 
+  limit as firestoreLimit, 
   updateDoc, 
   arrayUnion, 
   increment, 
@@ -17,7 +17,6 @@ import {
 // User-related functions
 export const saveUserToFirebase = async (user) => {
   try {
-    console.log("Attempting to save user to Firebase:", user.id);
     const userRef = doc(db, 'users', user.id);
     const userSnapshot = await getDoc(userRef);
     
@@ -37,7 +36,6 @@ export const saveUserToFirebase = async (user) => {
         gameHistory: []
       });
       
-      console.log('New user created in Firebase:', user.id);
       return true;
     } else {
       // Update last login
@@ -45,11 +43,9 @@ export const saveUserToFirebase = async (user) => {
         lastLogin: serverTimestamp()
       });
       
-      console.log('User login updated in Firebase:', user.id);
       return true;
     }
   } catch (error) {
-    console.error('Error saving user to Firebase:', error);
     return false;
   }
 };
@@ -62,11 +58,9 @@ export const getUserData = async (userId) => {
     if (userSnapshot.exists()) {
       return userSnapshot.data();
     } else {
-      console.log('User not found in Firebase');
       return null;
     }
   } catch (error) {
-    console.error('Error getting user data:', error);
     return null;
   }
 };
@@ -74,12 +68,6 @@ export const getUserData = async (userId) => {
 // Points and stats related functions
 export const updateUserPoints = async (userId, points, gameResult) => {
   try {
-    console.log(`Updating user ${userId} points in Firebase:`, { 
-      pointsToAdd: points,
-      isWin: gameResult.isWin,
-      difficulty: gameResult.difficulty
-    });
-    
     const userRef = doc(db, 'users', userId);
     
     // Create a game record with a current date string instead of serverTimestamp
@@ -111,7 +99,6 @@ export const updateUserPoints = async (userId, points, gameResult) => {
         await updateDoc(userRef, {
           bestTime: gameResult.timeSpent
         });
-        console.log(`Updated best time for user ${userId} to ${gameResult.timeSpent} seconds`);
       }
     }
     
@@ -127,21 +114,19 @@ export const updateUserPoints = async (userId, points, gameResult) => {
       });
     }
     
-    console.log(`User ${userId} points updated successfully: ${points} points added`);
     return true;
   } catch (error) {
-    console.error(`Error updating user ${userId} points:`, error);
     return false;
   }
 };
 
 // Leaderboard functions
-export const getLeaderboard = async (limit = 50) => {
+export const getLeaderboard = async (limitCount = 50) => {
   try {
     const leaderboardQuery = query(
       collection(db, 'users'),
       orderBy('points', 'desc'),
-      limit(limit)
+      firestoreLimit(limitCount)
     );
     
     const leaderboardSnapshot = await getDocs(leaderboardQuery);
@@ -160,7 +145,7 @@ export const getLeaderboard = async (limit = 50) => {
     
     return leaderboard;
   } catch (error) {
-    console.error('Error fetching leaderboard:', error);
+    // Return empty array on error
     return [];
   }
 };
@@ -171,7 +156,6 @@ export const syncLocalStatsWithFirebase = async (userId, localStats) => {
     const userData = await getUserData(userId);
     
     if (!userData) {
-      console.error('User not found for syncing stats');
       return false;
     }
     
@@ -197,10 +181,8 @@ export const syncLocalStatsWithFirebase = async (userId, localStats) => {
       winRate
     });
     
-    console.log('Stats synchronized with Firebase');
     return true;
   } catch (error) {
-    console.error('Error syncing stats with Firebase:', error);
     return false;
   }
 }; 

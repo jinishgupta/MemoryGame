@@ -38,7 +38,15 @@ const Leaderboard = ({ onBack }) => {
       
       try {
         // Get top players from Firebase
-        const topPlayers = await fetchFirebaseLeaderboard(50);
+        // Make sure fetchFirebaseLeaderboard is a function before calling it
+        const topPlayers = typeof fetchFirebaseLeaderboard === 'function' 
+          ? await fetchFirebaseLeaderboard(50)
+          : [];
+        
+        // Validate that we got an array back
+        if (!Array.isArray(topPlayers)) {
+          throw new Error('Invalid leaderboard data');
+        }
         
         // Sort the leaderboard by points (descending)
         const sortedPlayers = [...topPlayers].sort((a, b) => b.points - a.points);
@@ -52,22 +60,24 @@ const Leaderboard = ({ onBack }) => {
         setLeaderboard(rankedPlayers);
         
         // Get player's data if logged in
-        if (isLoggedIn && user) {
-          const userData = await getUserData(user.id);
-          
-          if (userData) {
-            // Find player's rank
-            const rank = rankedPlayers.findIndex(p => p.id === user.id) + 1;
+        if (isLoggedIn && user && user.id) {
+          try {
+            const userData = await getUserData(user.id);
             
-            setPlayerRank({
-              rank: rank > 0 ? rank : rankedPlayers.length + 1,
-              points: userData.points || 0
-            });
+            if (userData) {
+              // Find player's rank
+              const rank = rankedPlayers.findIndex(p => p.id === user.id) + 1;
+              
+              setPlayerRank({
+                rank: rank > 0 ? rank : rankedPlayers.length + 1,
+                points: userData.points || 0
+              });
+            }
+          } catch (userError) {
+            // Silent error - continue showing leaderboard without user data
           }
         }
       } catch (error) {
-        console.error('Error loading leaderboard:', error);
-        
         // Fallback to local leaderboard or show error
         // Try to get data from localStorage as fallback
         try {
@@ -77,12 +87,9 @@ const Leaderboard = ({ onBack }) => {
               ...player,
               rank: index + 1
             })));
-            
-            // Show notification that we're using cached data
-            alert("Using locally cached leaderboard data. Some information may be out of date.");
           }
         } catch (localError) {
-          console.error('Error loading local leaderboard:', localError);
+          // Silent error - will show empty leaderboard
         }
       } finally {
         setLoading(false);
@@ -112,7 +119,15 @@ const Leaderboard = ({ onBack }) => {
     
     try {
       // Get updated data from Firebase
-      const topPlayers = await fetchFirebaseLeaderboard(50);
+      // Make sure fetchFirebaseLeaderboard is a function before calling it
+      const topPlayers = typeof fetchFirebaseLeaderboard === 'function'
+        ? await fetchFirebaseLeaderboard(50)
+        : [];
+      
+      // Validate that we got an array back
+      if (!Array.isArray(topPlayers)) {
+        throw new Error('Invalid leaderboard data');
+      }
       
       // Sort the leaderboard by points (descending)
       const sortedPlayers = [...topPlayers].sort((a, b) => b.points - a.points);
@@ -126,21 +141,25 @@ const Leaderboard = ({ onBack }) => {
       setLeaderboard(rankedPlayers);
       
       // Update player's rank and points if logged in
-      if (isLoggedIn && user) {
-        const userData = await getUserData(user.id);
-        
-        if (userData) {
-          // Find player's rank
-          const rank = rankedPlayers.findIndex(p => p.id === user.id) + 1;
+      if (isLoggedIn && user && user.id) {
+        try {
+          const userData = await getUserData(user.id);
           
-          setPlayerRank({
-            rank: rank > 0 ? rank : rankedPlayers.length + 1,
-            points: userData.points || 0
-          });
+          if (userData) {
+            // Find player's rank
+            const rank = rankedPlayers.findIndex(p => p.id === user.id) + 1;
+            
+            setPlayerRank({
+              rank: rank > 0 ? rank : rankedPlayers.length + 1,
+              points: userData.points || 0
+            });
+          }
+        } catch (userError) {
+          // Silent error - continue showing leaderboard without updated user data
         }
       }
     } catch (error) {
-      console.error('Error refreshing leaderboard:', error);
+      // Silent error - keep showing the existing leaderboard data
     } finally {
       setLoading(false);
     }

@@ -10,10 +10,10 @@ const SOUNDS = {
   noMatch: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAiIiIiIiIiIiIiIiIiIiIiIiIiIiIu7u7u7u7u7u7u7u7u7u7u7u7u7u7u93d3d3d3d3d3d3d3d3d3d3d3d3d3d3///////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAYaAAAAAAAAAbDPCB9wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/4xjEAAqYbqoNVhAAJkuXe0iAAAy8vEIQeBMD4Pg+CAYiAQB4Pg+H33nIOfAIBAIAgCCd5QEB33ggEAQBAEA74IBAEAQD4IBB+CAQBAEAQDvggEAQD373wQCAd8EAgCAIAgHe+CAQBAPhB9974IBAPggEAQD373wQCAIAgCAd8EAgEAQD373wQD4IBAPhB9974IB3wQCAfBAPggHfBAO+CAQD4IBAEAQDvggEAQBAO98EAgCAd8EAgCJE=',
   
   // Win sound
-  win: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAiIiIiIiIiIiIiIiIiIiIiIiIiIiIu7u7u7u7u7u7u7u7u7u7u7u7u7u7u93d3d3d3d3d3d3d3d3d3d3d3d3d3d3///////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAYeAAAAAAAAAbCFFl4IAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAKSE6PNUEQAGAvue8RIAhM9L7lEBAkJALACLChQocKDFmCoUKHChQoIsaHChQoUKFCxgsULFChQoUKFDhasaHFChQoUKFChY4UKFChQoUKHDBjBi0KFChQoUKFDxwocKFChQoUKFDBYoUKFChQoUKFDhQoUKFChQoUKHDBjBhQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKA==',
+  win: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAiIiIiIiIiIiIiIiIiIiIiIiIiIiIu7u7u7u7u7u7u7u7u7u7u7u7u7u7u93d3d3d3d3d3d3d3d3d3d3d3d3d3d3///////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAYeAAAAAAAAAbCFFl4IAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAKSE6PNUEQAGAvue8RIAhM9L7lEBAkJALACLChQocKDFmCoUKHChQoIsaHChQoUKFCxgsULFChQoUKFDhasaHFChQoUKFChY4UKFChQoUKHDBjBi0KFChQoUKFDxwocKFChQoUKFDBYoUKFChQoUKFDhQoUKFChQoUKHDBjBhQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKFChQoUKA==',
   
   // Lose sound
-  lose: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAiIiIiIiIiIiIiIiIiIiIiIiIiIiIu7u7u7u7u7u7u7u7u7u7u7u7u7u7u93d3d3d3d3d3d3d3d3d3d3d3d3d3d3///////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAYiAAAAAAAAAbCdaD2QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAKUG6iBVhAAJOu+jUhAAxy9+qRBEREYgPg+D4fB8UBAEAfB8HwfFAQP/B8HxQEDwfB8HwfB8UBAEAQDgf/FAQBAHwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8Hw=',
+  lose: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAiIiIiIiIiIiIiIiIiIiIiIiIiIiIu7u7u7u7u7u7u7u7u7u7u7u7u7u7u93d3d3d3d3d3d3d3d3d3d3d3d3d3d3///////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAYiAAAAAAAAAbCdaD2QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAKUG6iBVhAAJOu+jUhAAxy9+qRBEREYgPg+D4fB8UBAEAfB8HwfFAQP/B8HxQEDwfB8HwfB8UBAEAQDgf/FAQBAHwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8Hw=',
   
   // Click sound
   click: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAiIiIiIiIiIiIiIiIiIiIiIiIiIiIu7u7u7u7u7u7u7u7u7u7u7u7u7u7u93d3d3d3d3d3d3d3d3d3d3d3d3d3d3///////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAYmAAAAAAAAAbCt6B1wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/4xjEAAp4TonVQRAAG/AiNURAAJmu+lUhERERiAYHwfB8OB4Pg+D4fB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8HwfB8Hw=',
@@ -87,44 +87,49 @@ const loadAudioBuffer = async (key, url) => {
 
 // Function to create audio elements with error handling
 const createAudioElement = (url) => {
-  const audio = new Audio();
-  
-  // Set up error handling
-  audio.onerror = (e) => {
-    console.error(`Error loading sound: ${e.type}`, e);
-  };
-  
-  // Prevent memory leaks by releasing resources when done
-  audio.onended = () => {
-    audio.src = '';
-  };
-  
-  // Set the src after adding error handler
-  audio.src = url;
-  
-  return audio;
+  try {
+    const audio = new Audio();
+    
+    // Set up error handling (silent)
+    audio.onerror = () => { };
+    
+    // Prevent memory leaks by releasing resources when done
+    audio.onended = () => {
+      audio.src = '';
+    };
+    
+    // Set the src after adding error handler
+    audio.src = url;
+    
+    return audio;
+  } catch (error) {
+    // Return a dummy audio element that does nothing
+    return { 
+      play: () => Promise.resolve(), 
+      cloneNode: () => ({ 
+        play: () => Promise.resolve(), 
+        volume: 0 
+      }),
+      load: () => {},
+      volume: 0
+    };
+  }
 };
 
 // Initialize sound system
 const initializeSounds = async () => {
-  console.log("Initializing sound system...");
-  
   // Check if audio context is in suspended state and try to resume it
   if (audioContext && audioContext.state === 'suspended') {
     try {
       await audioContext.resume();
-      console.log("AudioContext resumed successfully");
     } catch (err) {
-      console.warn("Could not resume AudioContext:", err);
+      // Silent error
     }
   }
   
   // Preload all sounds
   const preloadPromises = Object.entries(SOUNDS).map(async ([key, url]) => {
     try {
-      // Log the initialization of each sound
-      console.log(`Initializing sound: ${key}`);
-      
       // Create a fallback Audio element first (guaranteed to work)
       audioElements[key] = createAudioElement(url);
       
@@ -141,13 +146,11 @@ const initializeSounds = async () => {
       if (audioContext) {
         try {
           await loadAudioBuffer(key, url);
-          console.log(`Successfully loaded ${key} into AudioBuffer`);
         } catch (bufferError) {
-          console.warn(`Could not load ${key} into AudioBuffer, falling back to Audio element:`, bufferError);
+          // Silent error
         }
       }
     } catch (err) {
-      console.error(`Failed to initialize sound ${key}:`, err);
       // Create simple placeholders so the game doesn't crash on sound playback
       audioElements[key] = { 
         play: () => Promise.resolve(), 
@@ -164,9 +167,8 @@ const initializeSounds = async () => {
   try {
     // Wait for all sounds to initialize
     await Promise.allSettled(preloadPromises);
-    console.log("Sound system initialization complete");
   } catch (err) {
-    console.error("Error during sound system initialization:", err);
+    // Silent error
   }
 };
 
@@ -193,8 +195,8 @@ export const playSound = (soundName) => {
       // Check if context is in suspended state
       if (audioContext.state === 'suspended') {
         // Try to resume the context
-        audioContext.resume().catch(err => {
-          console.warn('Failed to resume audio context on playback:', err);
+        audioContext.resume().catch(() => {
+          // Silent error
         });
       }
       
@@ -215,15 +217,14 @@ export const playSound = (soundName) => {
         source.start(0);
         return;
       } catch (webAudioError) {
-        console.warn(`Web Audio API playback failed for ${soundName}, falling back to Audio element:`, webAudioError);
-        // Continue to Audio element fallback
+        // Continue to Audio element fallback (silent error)
       }
     }
     
     // Fallback to Audio elements if Web Audio API is not available
     const audio = audioElements[soundName];
     if (!audio) {
-      console.warn(`No audio element found for ${soundName}`);
+      // Create a silent placeholder instead of warning
       return;
     }
     
@@ -247,7 +248,6 @@ export const playSound = (soundName) => {
       try {
         soundClone.currentTime = 0;
       } catch (resetError) {
-        console.warn(`Couldn't reset currentTime, creating new clone for ${soundName}:`, resetError);
         soundClone = audio.cloneNode();
       }
     } else {
@@ -259,15 +259,14 @@ export const playSound = (soundName) => {
     try {
       soundClone.volume = audio.volume;
     } catch (volumeError) {
-      console.warn(`Couldn't set volume for ${soundName}:`, volumeError);
+      // Silent error
     }
     
     // Add to instances array
     soundInstances[soundName].push(soundClone);
     
     // Play with error handling
-    soundClone.play().catch(err => {
-      console.warn(`Error playing sound ${soundName}: ${err.message}`);
+    soundClone.play().catch(() => {
       // Remove this instance from the array as it failed to play
       const index = soundInstances[soundName].indexOf(soundClone);
       if (index > -1) {
@@ -275,7 +274,7 @@ export const playSound = (soundName) => {
       }
     });
   } catch (error) {
-    console.error(`Failed to play sound ${soundName}:`, error);
+    // Silent error
   }
 };
 

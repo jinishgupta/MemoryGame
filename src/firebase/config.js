@@ -16,7 +16,7 @@ const firebaseConfig = {
 };
 
 // Wrap Firebase initialization in a retry mechanism
-const initializeFirebase = (retries = 3, delay = 1000) => {
+const initializeFirebase = (retries = 5, delay = 1500) => {
   let app;
   let retryCount = 0;
   
@@ -26,26 +26,20 @@ const initializeFirebase = (retries = 3, delay = 1000) => {
       if (getApps().length === 0) {
         // Initialize Firebase if no apps exist
         app = initializeApp(firebaseConfig);
-        console.log("Firebase initialized successfully");
       } else {
         // Use the first existing app
         app = getApps()[0];
-        console.log("Using existing Firebase app");
       }
       return app;
     } catch (error) {
-      console.error(`Firebase initialization error (attempt ${retryCount + 1}):`, error);
-      
       if (retryCount < retries) {
         retryCount++;
-        console.log(`Retrying in ${delay}ms...`);
         // Use setTimeout for browser environments
         setTimeout(tryInitialize, delay);
         return null;
       }
       
       // If we've exhausted retries, return a minimal mock app to prevent crashes
-      console.warn("Firebase initialization failed after retries, using fallback");
       return {
         // Minimal stub to prevent crashes in dependent code
         name: "[firebase-fallback]",
@@ -71,17 +65,30 @@ try {
   // Add event listeners for connection state
   if (typeof window !== 'undefined') {
     window.addEventListener('online', () => {
-      console.log('App is online, reconnecting to Firebase');
       // Reinitialize if needed
     });
   }
 } catch (error) {
-  console.error("Error initializing Firebase services:", error);
-  
   // Provide stub implementations to prevent crashes
   db = {
-    collection: () => ({ get: async () => ({ docs: [] }), add: async () => ({}) }),
-    doc: () => ({ get: async () => ({ exists: false, data: () => ({}) }), set: async () => {} })
+    collection: () => ({ 
+      get: async () => ({ docs: [] }), 
+      add: async () => ({}),
+      withConverter: () => ({
+        get: async () => ({ docs: [] }),
+        add: async () => ({})
+      })
+    }),
+    doc: () => ({ 
+      get: async () => ({ exists: false, data: () => ({}) }), 
+      set: async () => {},
+      update: async () => {},
+      withConverter: () => ({
+        get: async () => ({ exists: false, data: () => ({}) }),
+        set: async () => {},
+        update: async () => {}
+      })
+    })
   };
   
   auth = {
