@@ -22,9 +22,17 @@ import {
 
 // Enable Orange ID import
 import { useBedrockPassport } from "@bedrock_org/passport";
+// Import Firebase service for updating display name
+import { updateUserDisplayName } from "../firebase/firebaseService";
 
 const ProfilePage = ({ onBack }) => {
   const { user } = useBedrockPassport();
+  
+  // State for editing display name
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [nameUpdateStatus, setNameUpdateStatus] = useState({ message: '', isError: false });
+  const [showNameStatus, setShowNameStatus] = useState(false);
   
   // State for user stats
   const [stats, setStats] = useState({
@@ -57,7 +65,12 @@ const ProfilePage = ({ onBack }) => {
   // Load all stats from localStorage on component mount
   useEffect(() => {
     loadAllStats();
-  }, []);
+    
+    // Initialize display name from user data
+    if (user && user.displayName) {
+      setNewDisplayName(user.displayName);
+    }
+  }, [user]);
   
   // Function to load all stats from localStorage
   const loadAllStats = () => {
@@ -244,6 +257,75 @@ const ProfilePage = ({ onBack }) => {
    stats.difficultyStats.hard.dailyChallengeAttempts) / 2
 );
 
+  // Handle display name edit
+  const startEditingName = () => {
+    setIsEditingName(true);
+    setNewDisplayName(user?.displayName || '');
+  };
+
+  const cancelEditingName = () => {
+    setIsEditingName(false);
+    setNameUpdateStatus({ message: '', isError: false });
+    setShowNameStatus(false);
+  };
+
+  const saveDisplayName = async () => {
+    if (!user || !user.id) {
+      setNameUpdateStatus({ 
+        message: 'You must be logged in to update your name', 
+        isError: true 
+      });
+      setShowNameStatus(true);
+      return;
+    }
+
+    if (!newDisplayName || newDisplayName.trim() === '') {
+      setNameUpdateStatus({ 
+        message: 'Display name cannot be empty', 
+        isError: true 
+      });
+      setShowNameStatus(true);
+      return;
+    }
+
+    try {
+      const result = await updateUserDisplayName(user.id, newDisplayName);
+      
+      if (result.success) {
+        setNameUpdateStatus({ 
+          message: 'Name updated successfully!', 
+          isError: false 
+        });
+        
+        // Update the user object if possible
+        if (user && typeof user === 'object') {
+          user.displayName = newDisplayName.trim();
+        }
+        
+        // Set local storage for users who aren't logged in with Orange ID
+        localStorage.setItem('orngPlayerName', newDisplayName.trim());
+        
+        // Exit edit mode
+        setTimeout(() => {
+          setIsEditingName(false);
+          setShowNameStatus(false);
+        }, 1500);
+      } else {
+        setNameUpdateStatus({ 
+          message: result.message || 'Failed to update name', 
+          isError: true 
+        });
+      }
+    } catch (error) {
+      setNameUpdateStatus({ 
+        message: 'An error occurred while updating your name', 
+        isError: true 
+      });
+    }
+    
+    setShowNameStatus(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-800 py-8 px-4 overflow-y-auto">
       <div className="container max-w-4xl mx-auto">
@@ -282,9 +364,60 @@ const ProfilePage = ({ onBack }) => {
               <FontAwesomeIcon icon={faUser} className="text-white text-2xl" />
             </div>
             <div className="flex-grow">
-              <h1 className="text-2xl font-bold text-white mr-3">
-  {user?.displayName || localStorage.getItem('orngPlayerName') || user?.name || 'You'}
-</h1>
+              {!isEditingName ? (
+                <div className="flex items-center">
+                  <h1 className="text-2xl font-bold text-white mr-3">
+                    {user?.displayName || localStorage.getItem('orngPlayerName') || user?.name || 'You'}
+                  </h1>
+                  <motion.button
+                    onClick={startEditingName}
+                    className="text-indigo-400 hover:text-indigo-300 p-1"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    title="Edit your display name"
+                  >
+                    <FontAwesomeIcon icon={faEdit} />
+                  </motion.button>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      value={newDisplayName}
+                      onChange={(e) => setNewDisplayName(e.target.value)}
+                      placeholder="Enter your display name"
+                      className="bg-slate-700 text-white px-3 py-2 rounded-lg mr-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      maxLength={20}
+                    />
+                    <motion.button
+                      onClick={saveDisplayName}
+                      className="bg-green-600 hover:bg-green-500 text-white px-3 py-2 rounded-lg mr-2"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FontAwesomeIcon icon={faCheck} />
+                    </motion.button>
+                    <motion.button
+                      onClick={cancelEditingName}
+                      className="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-lg"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </motion.button>
+                  </div>
+                  {showNameStatus && (
+                    <motion.p 
+                      className={`text-sm mt-2 ${nameUpdateStatus.isError ? 'text-red-400' : 'text-green-400'}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      {nameUpdateStatus.message}
+                    </motion.p>
+                  )}
+                </div>
+              )}
               {user?.email && (
                 <p className="text-indigo-300 mb-2">
                   <FontAwesomeIcon icon={faEnvelope} className="mr-2" />

@@ -101,7 +101,7 @@ const Leaderboard = ({ onBack }) => {
 
   // Filter leaderboard by search term
   const filteredLeaderboard = leaderboard.filter(player => 
-    player.name.toLowerCase().includes(searchTerm.toLowerCase())
+    player.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   // Sort filtered leaderboard based on sort preference

@@ -18,6 +18,7 @@ MatchUp challenges players to test their memory by matching pairs of cards displ
 - **Duel Mode**: Challenge other players and bet points
 - **Point System**: Earn points based on difficulty level and gameplay achievements
 - **Global Leaderboard**: Compare your performance with players worldwide
+- **Customizable Profile**: Change your display name to personalize your experience
 
 ## Key Features
 
@@ -32,6 +33,7 @@ MatchUp challenges players to test their memory by matching pairs of cards displ
 
 - **User Authentication**: Secure login via Bedrock Passport
 - **Persistent Progress**: Your game statistics are stored in the cloud
+- **Profile Customization**: Update your display name that appears on the leaderboard
 - **Offline Support**: Basic gameplay functions even without internet connection
 - **Theme and Accessibility**: High-contrast visuals and responsive controls
 

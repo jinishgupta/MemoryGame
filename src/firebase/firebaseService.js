@@ -50,6 +50,31 @@ export const saveUserToFirebase = async (user) => {
   }
 };
 
+// Update user display name
+export const updateUserDisplayName = async (userId, newDisplayName) => {
+  try {
+    if (!userId || !newDisplayName || newDisplayName.trim() === '') {
+      return { success: false, message: 'Invalid user ID or display name' };
+    }
+    
+    const userRef = doc(db, 'users', userId);
+    const userSnapshot = await getDoc(userRef);
+    
+    if (!userSnapshot.exists()) {
+      return { success: false, message: 'User not found' };
+    }
+    
+    // Update the display name
+    await updateDoc(userRef, {
+      displayName: newDisplayName.trim()
+    });
+    
+    return { success: true, message: 'Display name updated successfully' };
+  } catch (error) {
+    return { success: false, message: 'Failed to update display name' };
+  }
+};
+
 export const getUserData = async (userId) => {
   try {
     const userRef = doc(db, 'users', userId);
